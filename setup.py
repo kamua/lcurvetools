@@ -3,12 +3,12 @@ from setuptools import setup
 from setuptools import find_packages
 
 
-# __version__ = None
+__version__ = None
 
-# abspath = os.path.abspath(os.path.dirname(__file__))
-# exec(open(os.path.join(abspath, "lcurvetools/version.py")).read())
+abspath = os.path.abspath(os.path.dirname(__file__))
+exec(open(os.path.join(abspath, "lcurvetools/version.py")).read())
 
-from lcurvetools import __version__
+# from lcurvetools import __version__
 
 ######################################################################################################
 ################ You May Remove All the Comments Once You Finish Modifying the Script ################
