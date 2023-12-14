@@ -1,4 +1,4 @@
-import os
+limport os
 from setuptools import setup
 from setuptools import find_packages
 
@@ -17,7 +17,7 @@ from lcurvetools import __version__
 setup(
     name = 'lcurvetools', 
     version = __version__,
-    description = 'Simple tools to plot learning curves of machine learning models created by scikit-learn or keras framework..',
+    description = 'Simple tools to plot learning curves of neural network models created by scikit-learn or keras framework.',
     py_modules = ["lcurvetools"],
     package_dir = {'':'lcurvetools'},
     author = 'Andriy Konovalov',
