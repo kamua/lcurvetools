@@ -15,47 +15,12 @@ from lcurvetools import __version__
 
 setup(
     name = 'lcurvetools', 
-    
-    '''
-    The version number of your package consists of three integers "Major.Minor.Patch".
-    Typically, when you fix a bug, that will lead to a patch release. (e.g. 0.1.1 --> 0.1.2)
-    If you add a new feature to your package, that will lead to a minor release. (e.g. 0.1.0 --> 0.2.0)
-    If a major change that will affect many users happened, you will want to make it as a major release (e.g. 0.1.0 --> 1.0.0)
-    '''
     version = __version__,
-    
-    '''
-    This is the short description will show on the top of the webpage of your package on pypi.org
-    '''
-    description = 'An NLP python package for computing Boilerplate score and many other text features.',
-    
-    '''
-    This is the name of your main module file. No need to include the .py at the end.
-    '''    
-    py_modules = ["TheModuleName"],
-    
-    '''
-    Leave it as default. It shows where the module is stored.
-    '''
-    package_dir = {'':'src'},
-    
-    '''
-    If you have many modules included in your package, you want to use the following parameter instead of py_modules.
-    '''
-#     packages = ['ThePackageName1',
-#                 'ThePackageName2',
-#                 ...
-#  ],
-    
-    '''
-    Change the author name(s) and email(s) here.
-    '''
-    author = 'AuthorName',
-    author_email = 'xyz123@something.com',
-    
-    '''
-    Leave the following as default. It will show the readme and changelog on the main page of your package.
-    '''
+    description = 'Simple tools to plot learning curves of machine learning models created by scikit-learn or keras framework..',
+    py_modules = ["lcurvetools"],
+    package_dir = {'':'lcurvetools'},
+    author = 'Andriy Konovalov',
+    author_email = 'kandriy74@gmail.com',
     long_description = open('README.md').read() + '\n\n' + open('CHANGELOG.md').read(),
     long_description_content_type = "text/markdown",
     
