@@ -1,25 +1,17 @@
-limport os
+import os
 from setuptools import setup
 from setuptools import find_packages
 
 
-__version__ = None
+# __version__ = None
 
 abspath = os.path.abspath(os.path.dirname(__file__))
-exec(open(os.path.join(abspath, "lcurvetools/version.py")).read())
-
-# from lcurvetools import __version__
-
-######################################################################################################
-################ You May Remove All the Comments Once You Finish Modifying the Script ################
-######################################################################################################
+exec(open(os.path.join(abspath, "lcurvetools", "version.py")).read())
 
 setup(
     name = 'lcurvetools', 
     version = __version__,
     description = 'Simple tools to plot learning curves of neural network models created by scikit-learn or keras framework.',
-    py_modules = ["lcurvetools"],
-    package_dir = {'':'lcurvetools'},
     author = 'Andriy Konovalov',
     author_email = 'kandriy74@gmail.com',
     license='BSD 3-Clause License',
@@ -51,5 +43,6 @@ setup(
         'numpy',
         'matplotlib'
     ],
+    packages=find_packages(exclude=("*_test.py",)),
     keywords = ['learning curve', 'keras history', 'loss_curve', 'validation_score']
 )
