@@ -3,14 +3,26 @@ from setuptools import setup
 from setuptools import find_packages
 
 
-# __version__ = None
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, rel_path)) as fp:
+        return fp.read()
 
-abspath = os.path.abspath(os.path.dirname(__file__))
-exec(open(os.path.join(abspath, "lcurvetools", "version.py")).read())
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith("__version__"):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    raise RuntimeError("Unable to find version string.")
+
+if os.path.exists("lcurvetools/version.py"):
+    VERSION = get_version("lcurvetools/version.py")
+else:
+    VERSION = get_version("lcurvetools/__init__.py")
 
 setup(
     name = 'lcurvetools', 
-    version = __version__,
+    version = VERSION,
     description = 'Simple tools to plot learning curves of neural network models created by scikit-learn or keras framework.',
     author = 'Andriy Konovalov',
     author_email = 'kandriy74@gmail.com',
@@ -29,15 +41,8 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: Unix",
         "Operating System :: MacOS",
-        "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
-
+        "Programming Language :: Python :: 3 :: Only"
     ],
     install_requires = [
         'numpy',
