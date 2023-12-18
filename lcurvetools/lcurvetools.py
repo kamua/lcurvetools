@@ -134,15 +134,17 @@ def lcurves_by_history(
 ):
     """
     Plot learning curves of a neural network model trained with the keras
-    framework.
+    framework on three subplots with dependences of values of the loss
+    functions, metrics and the learning rate on the epoch index.
 
     Parameters
     ----------
     history : dict
         The dictionary should be a record of training loss values
-        and metrics values at successive epochs, as well as validation loss
-        values and validation metrics values (if applicable) in the format of
-        the `history` attribute of the [History object](https://keras.io/api/models/model_training_apis/#:~:text=Returns-,A%20History%20object,-.%20Its%20History.history),
+        and metrics values, validation loss values and validation metrics
+        values (if applicable), as well as learning rate values (if applicable)
+        at successive epochs in the format of the `history` attribute of the
+        [History object](https://keras.io/api/models/model_training_apis/#:~:text=Returns-,A%20History%20object,-.%20Its%20History.history),
         which is returned by the [fit](https://keras.io/api/models/model_training_apis/#fit-method)
         method of the model. At least one of the dictionary keys should be
         `loss`.
@@ -150,11 +152,17 @@ def lcurves_by_history(
     num_ignored_epochs : int, default=0
         The number of initial epochs that are ignored when fitting the limits
         of the vertical axes of the plots. If `num_ignored_epochs` is outside
-        the range `[initial_epoch, initial_epoch + n_epochs]`, then the limits
-        are fitted for all epochs.
+        the range `(initial_epoch, initial_epoch + n_epochs)` where `n_epochs`
+        is a number of epochs represented in the `history`, then
+        the limits are fitted over all epochs.
 
     initial_epoch : int, default=0
-        _description_
+        The epoch at which the `fit` method had started to train the model.
+        The parameter corresponds to the [parameter with the same name](https://keras.io/api/models/model_training_apis/#fit-method:~:text=in%20compile()%20instead.-,initial_epoch,-%3A%20Integer.%20Epoch%20at)
+        of the `fit` method. Also, setting `initial_epoch=1` can be useful to
+        convert the epoch index labeled at the horizontal axes of the plots
+        into the number of passed epochs.
+
     plot_losses : bool, default=True
         _description_
     plot_metrics : bool, default=True
