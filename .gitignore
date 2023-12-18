@@ -161,3 +161,4 @@ cython_debug/
 Anaconda Prompt (Anaconda3).lnk
 build.bat
 .vscode
+test_notebook.ipynb

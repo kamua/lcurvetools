@@ -1,4 +1,4 @@
-from .lcurvetools import learning_curve
+from .lcurvetools import lcurves_by_history, lcurves_by_estimator, lcurves
 
 # Unique source of truth for the version number.
 __version__ = "1.0.0"
