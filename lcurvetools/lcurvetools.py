@@ -133,21 +133,22 @@ def lcurves_by_history(
     figsize=None,
 ):
     """
-    Plot learning curves of a neural network model trained with the keras
-    framework on three subplots with dependences of values of the loss
-    functions, metrics and the learning rate on the epoch index.
+    Plots learning curves of a neural network model trained with the keras
+    framework. Dependences of values of the loss functions, metrics and the
+    learning rate on the epoch index can be plotted on three subplots along
+    a figure column.
 
     Parameters
     ----------
     history : dict
-        The dictionary should be a record of training loss values
-        and metrics values, validation loss values and validation metrics
-        values (if applicable), as well as learning rate values (if applicable)
-        at successive epochs in the format of the `history` attribute of the
-        [History object](https://keras.io/api/models/model_training_apis/#:~:text=Returns-,A%20History%20object,-.%20Its%20History.history),
-        which is returned by the [fit](https://keras.io/api/models/model_training_apis/#fit-method)
-        method of the model. At least one of the dictionary keys should be
-        `loss`.
+        The dictionary could contain keys with training and validation values
+        of losses and metrics, as well as learning rate values at successive
+        epochs in the format of the `history` attribute of the `History`
+        object which is returned by the
+        [fit](https://keras.io/api/models/model_training_apis/#fit-method)
+        method of the model. The values of all keys should be represented by
+        numeric lists of the same length, equal to the number of epochs
+        `n_epochs`.
 
     num_ignored_epochs : int, default=0
         The number of initial epochs that are ignored when fitting the limits
@@ -158,10 +159,11 @@ def lcurves_by_history(
 
     initial_epoch : int, default=0
         The epoch at which the `fit` method had started to train the model.
-        The parameter corresponds to the [parameter with the same name](https://keras.io/api/models/model_training_apis/#fit-method:~:text=in%20compile()%20instead.-,initial_epoch,-%3A%20Integer.%20Epoch%20at)
-        of the `fit` method. Also, setting `initial_epoch=1` can be useful to
-        convert the epoch index labeled at the horizontal axes of the plots
-        into the number of passed epochs.
+        The parameter corresponds to the same parameter of the
+        [fit](https://keras.io/api/models/model_training_apis/#fit-method)
+        method of the model. Also, setting `initial_epoch=1` can be useful
+        to convert the epoch index plotted along the horizontal axes of the
+        subplots into the number of passed epochs.
 
     plot_losses : bool, default=True
         _description_
@@ -178,7 +180,9 @@ def lcurves_by_history(
         first_epoch_index = max(0, num_ignored_epochs - initial_epoch)
         for key in keys:
             ylim_top = max(ylim_top, max(history[key][first_epoch_index:]))
-            ylim_bottom = min(ylim_bottom, min(history[key][first_epoch_index:]))
+            ylim_bottom = min(
+                ylim_bottom, min(history[key][first_epoch_index:])
+            )
         pad = (ylim_top - ylim_bottom) * 0.05
         if pad == 0:
             pad = 0.01
@@ -189,10 +193,12 @@ def lcurves_by_history(
             if len(plot_) > 0:
                 train_keys = []
                 for key_name in plot_:
-                    if key_name in history.keys():  # _keys:
+                    if key_name in history.keys():
                         train_keys.append(key_name)
                     else:
-                        print("Не знайдено ключ " + key_name + " в словнику history")
+                        print(
+                            f"The '{key_name}' key not found in the `history` dictionary."
+                        )
                 return train_keys + [
                     "val_" + key_name
                     for key_name in plot_
@@ -203,20 +209,34 @@ def lcurves_by_history(
         return []
 
     if not type(history) is dict:
-        raise TypeError("history має бути словником")
-    if "loss" not in history.keys() < 1:
-        raise TypeError("Словник history повинен мати ключ 'loss'")
+        raise TypeError("The `history` parameter should be a dictionary.")
+    if len(history) < 1:
+        raise ValueError("The `history` dictionary cannot be empty.")
+    set_lengths = set(map(len, history.values()))
+    if len(set_lengths) != 1:
+        raise TypeError(
+            "The values of all `history` keys should be lists of the same length, equal to the number of epochs."
+        )
+    n_epochs = list(set_lengths)[0]
+
     if type(plot_losses) not in [bool, list]:
         raise TypeError("Параметр plot_losses повинен мати тип bool або list")
     if type(plot_metrics) not in [bool, list]:
         raise TypeError("Параметр plot_metrics повинен мати тип bool або list")
     if type(plot_learning_rate) not in [bool, list]:
-        raise TypeError("Параметр plot_learning_rate повинен мати тип bool або list")
+        raise TypeError(
+            "Параметр plot_learning_rate повинен мати тип bool або list"
+        )
+
     # бажана перевірка, щоб не було повторів параметрів на різних графіках
 
-    loss_keys = [name for name in history.keys() if name == "loss" or "_loss" in name]
+    loss_keys = [
+        name for name in history.keys() if name == "loss" or "_loss" in name
+    ]
     lr_keys = [name for name in history.keys() if "learning_rate" in name]
-    metric_keys = [name for name in history.keys() if name not in (loss_keys + lr_keys)]
+    metric_keys = [
+        name for name in history.keys() if name not in (loss_keys + lr_keys)
+    ]
 
     plot_loss_keys = get_plot_keys(plot_losses, loss_keys)
     n_subplots = int(len(plot_loss_keys) > 0)
@@ -225,39 +245,48 @@ def lcurves_by_history(
     plot_metric_keys = get_plot_keys(plot_metrics, metric_keys)
     n_subplots += int(len(plot_metric_keys) > 0)
 
-    lr_keys = [key for key in lr_keys if key not in plot_loss_keys + plot_metric_keys]
+    lr_keys = [
+        key for key in lr_keys if key not in plot_loss_keys + plot_metric_keys
+    ]
     plot_lr_keys = get_plot_keys(plot_learning_rate, lr_keys)
     n_subplots += int(len(plot_lr_keys) > 0)
     # бажана перевірка, щоб не було повторів параметрів на різних графіках
 
-    n_epochs = len(history["loss"])
+    # n_epochs = len(history["loss"])
     need_to_scale = (
         initial_epoch < num_ignored_epochs
         and num_ignored_epochs < initial_epoch + n_epochs
     )
 
-    fig = plt.gcf()
+    fig = plt.figure()  # plt.gcf()
     if n_subplots > 1:
         if n_subplots == 2:
             axs = fig.subplots(n_subplots, 1, sharex=True)
         else:
-            axs = fig.subplots(n_subplots, 1, sharex=True, height_ratios=[2, 2, 1])
-        # plt.subplot(n_subplots, 1, 1).xaxis.set_label_position("top")
+            axs = fig.subplots(
+                n_subplots, 1, sharex=True, height_ratios=[2, 2, 1]
+            )
     else:
         axs = [plt.gca()]
 
     for i, ax in enumerate(axs):
-        # ax.tick_params(bottom=False, labelbottom=False, labelright=True, right=True)
         ax.minorticks_on()
         ax.tick_params(
-            axis="x", which="minor", direction="inout", length=5, bottom=True, top=True
+            axis="x",
+            which="minor",
+            direction="inout",
+            length=5,
+            bottom=True,
+            top=True,
         )
         ax.tick_params(
-            axis="x", which="major", direction="inout", length=7, bottom=True, top=True
+            axis="x",
+            which="major",
+            direction="inout",
+            length=7,
+            bottom=True,
+            top=True,
         )
-        # ax.tick_params(axis="x", which="major", direction='in', top=True)
-        # ax.tick_params(axis="x", which="minor", direction='inout', length=4, bottom=True, top=True)
-        # ax.tick_params(axis="y", which="both", direction='out', left=True, labelleft=True, right=True, labelright=True)
         ax.tick_params(
             axis="y",
             which="minor",
@@ -276,19 +305,12 @@ def lcurves_by_history(
             labelleft=True,
             right=True,
         )
-        # ax.tick_params(axis="y", which="both", direction='in', right=True)
-        # ax.yaxis.set_ticks_position('left')
         ax.yaxis.set_label_position("left")
-        # ax.tick_params(axis="x", which="minor", direction="out",
-        #               top=True, labeltop=True, bottom=False, labelbottom=False)
-
         ax.grid()
+
     axs[0].tick_params(axis="x", labeltop=True)
-    # axs[0].set_xlabel("epoch")
-    # axs[0].xaxis.set_label_position('top')
     axs[-1].tick_params(axis="x", labelbottom=True)
     axs[-1].set_xlabel("epoch")
-    # axs[-1].tick_params(axis="x", which="both", direction='out', bottom=True, labelbottom=True)
 
     x = range(initial_epoch, initial_epoch + n_epochs)
 
@@ -303,21 +325,10 @@ def lcurves_by_history(
             ax.set_ylim(**get_ylims(plot_loss_keys))
 
         ax.set_ylabel("losses")
-        # plt.xlabel("epoch")
         ax.legend(plot_loss_keys, **kwargs_legend)
-        # plt.grid()
-        # plt.tick_params(which='minor', length=5)
         index_subplot += 1
 
     if len(plot_metric_keys) > 0:
-        # if n_subplots > 1:
-        #     if n_subplots == 3:
-        #         plt.subplot(n_subplots, 1, 2)
-        #     else:
-        #         if len(plot_loss_keys) > 0:
-        #             plt.subplot(n_subplots, 1, 2)
-        #         else:
-        #             plt.subplot(n_subplots, 1, 1)
         ax = axs[index_subplot]
         for key in plot_metric_keys:
             ax.plot(x, history[key])
@@ -325,14 +336,10 @@ def lcurves_by_history(
             ax.set_ylim(**get_ylims(plot_metric_keys))
 
         ax.set_ylabel("metrics")
-        # plt.xlabel("epoch")
         ax.legend(plot_metric_keys, **kwargs_legend)
-        # plt.grid()
         index_subplot += 1
 
     if len(plot_lr_keys) > 0:
-        # if n_subplots > 1:
-        #     plt.subplot(n_subplots, 1, n_subplots)
         ax = axs[index_subplot]
         for key in plot_lr_keys:
             ax.plot(x, history[key])
@@ -340,9 +347,7 @@ def lcurves_by_history(
             ax.set_ylim(**get_ylims(plot_lr_keys))
 
         ax.set_ylabel("learning rate")
-        # plt.xlabel("epoch")
         ax.legend(plot_lr_keys, **kwargs_legend)
-        # plt.grid()
         ax.set_yscalee("log", base=10)
         index_subplot += 1
 
@@ -351,10 +356,11 @@ def lcurves_by_history(
     figheight = fig.get_figheight() * 1.2
     if n_subplots > 1:
         plt.subplots_adjust(hspace=0)
+
     if figsize is None:
         # it prints no text "<Figure size ...>"
         fig.set_size_inches(figwidth, figheight)
     else:
         fig.set_size_inches(figsize)
-    plt.show()
+
     return
