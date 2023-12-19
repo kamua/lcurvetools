@@ -364,3 +364,13 @@ def lcurves_by_history(
         fig.set_size_inches(figsize)
 
     return
+
+
+def history_concatenate(history, last_history):
+    full_history = history.copy()
+    for key in last_history.keys():
+        if key in full_history.keys():
+            full_history[key] += last_history[key]
+        else:
+            full_history[key] = last_history[key]
+    return full_history
