@@ -14,7 +14,7 @@ def lcurves(
     figsize=None,
 ):
     """
-    Plot learning curves of the neural network model created with the keras or
+    Plot learning curves of the neural network model trained with the keras or
     scikit-learn framework.
 
     Parameters

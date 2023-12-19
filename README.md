@@ -1,2 +1,2 @@
 # lcurvetools
-Simple tools to plot learning curves of a neural network model created by scikit-learn or keras framework.
+Simple tools to plot learning curves of a neural network model trained with the keras or scikit-learn framework.
