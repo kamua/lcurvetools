@@ -233,7 +233,11 @@ def lcurves_by_history(
     loss_keys = [
         name for name in history.keys() if name == "loss" or "_loss" in name
     ]
-    lr_keys = [name for name in history.keys() if "learning_rate" in name]
+    lr_keys = [
+        name
+        for name in history.keys()
+        if "lr" == name or "learning_rate" in name
+    ]
     metric_keys = [
         name for name in history.keys() if name not in (loss_keys + lr_keys)
     ]
@@ -348,7 +352,7 @@ def lcurves_by_history(
 
         ax.set_ylabel("learning rate")
         ax.legend(plot_lr_keys, **kwargs_legend)
-        ax.set_yscalee("log", base=10)
+        ax.set_yscale("log", base=10)
         index_subplot += 1
 
     axs[0].set_xlim(left=initial_epoch)
