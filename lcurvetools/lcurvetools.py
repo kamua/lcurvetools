@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoMinorLocator
+from matplotlib import ticker
 import warnings
 
 
@@ -273,7 +273,10 @@ def lcurves_by_history(
     else:
         axs = [plt.gca()]
 
-    for i, ax in enumerate(axs):
+    # if len(plot_lr_keys) > 0:
+    #     axs[-1].set_yscale("log", base=10)
+
+    for ax in axs:
         ax.minorticks_on()
         ax.tick_params(
             axis="x",
@@ -311,6 +314,7 @@ def lcurves_by_history(
         )
         ax.yaxis.set_label_position("left")
         ax.grid()
+        # ax.grid(which="both")
 
     axs[0].tick_params(axis="x", labeltop=True)
     axs[-1].tick_params(axis="x", labelbottom=True)
@@ -347,12 +351,16 @@ def lcurves_by_history(
         ax = axs[index_subplot]
         for key in plot_lr_keys:
             ax.plot(x, history[key])
-        if need_to_scale:
-            ax.set_ylim(**get_ylims(plot_lr_keys))
+        ax.set_yscale("log", base=10)
+        ax.yaxis.set_major_locator(ticker.LogLocator(numticks=999))
+        ax.yaxis.set_minor_locator(
+            ticker.LogLocator(numticks=4, subs=(0.2, 0.4, 0.6, 0.8))
+        )
+        # if need_to_scale:
+        #     ax.set_ylim(**get_ylims(plot_lr_keys))
 
         ax.set_ylabel("learning rate")
         ax.legend(plot_lr_keys, **kwargs_legend)
-        ax.set_yscale("log", base=10)
         index_subplot += 1
 
     axs[0].set_xlim(left=initial_epoch)
