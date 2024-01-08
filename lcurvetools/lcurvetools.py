@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 import warnings
@@ -125,8 +124,8 @@ def lcurves_by_estimator(
 
 def lcurves_by_history(
     history,
-    num_ignored_epochs=0,
     initial_epoch=0,
+    epoch_range_to_scale=0,
     plot_losses=True,
     plot_metrics=True,
     plot_learning_rate=True,
@@ -134,9 +133,9 @@ def lcurves_by_history(
 ):
     """
     Plots learning curves of a neural network model trained with the keras
-    framework. Dependences of values of the loss functions, metrics and the
-    learning rate on the epoch index can be plotted on three subplots along
-    a figure column.
+    framework. Dependences of values of the losses, metrics and the learning
+    rate on the epoch index can be plotted on three subplots along a figure
+    column.
 
     Parameters
     ----------
@@ -150,39 +149,70 @@ def lcurves_by_history(
         numeric lists of the same length, equal to the number of epochs
         `n_epochs`.
 
-    num_ignored_epochs : int, default=0
-        The number of initial epochs that are ignored when fitting the limits
-        of the vertical axes of the plots. If `num_ignored_epochs` is outside
-        the range `(initial_epoch, initial_epoch + n_epochs)` where `n_epochs`
-        is a number of epochs represented in the `history`, then
-        the limits are fitted over all epochs.
-
     initial_epoch : int, default=0
-        The epoch at which the `fit` method had started to train the model.
-        The parameter corresponds to the same parameter of the
+        The epoch index at which the `fit` method had started to train
+        the model. The parameter corresponds to the same parameter of the
         [fit](https://keras.io/api/models/model_training_apis/#fit-method)
-        method of the model. Also, setting `initial_epoch=1` can be useful
+        method of a keras model. Also, setting `initial_epoch=1` can be useful
         to convert the epoch index plotted along the horizontal axes of the
         subplots into the number of passed epochs.
 
-    plot_losses : bool, default=True
-        _description_
-    plot_metrics : bool, default=True
-        _description_
-    plot_learning_rate : bool, default=True
-        _description_
+    epoch_range_to_scale : int or list (tuple) of int, default=0
+        Specifies the epoch index range within which the subplots of the
+        losses and metrics are scaled.
+        - If `epoch_range_to_scale` is a list or a tuple of two int values,
+        then they specify the epoch index limits of the scaling range in the
+        form `[start, stop)`, i.e. as for `slice` and `range` objects.
+        - If `epoch_range_to_scale` is an int value, then it specifies the
+        lower epoch index `start` of the scaling range, and the losses and
+        metrics subplots are scaled by epochs with indices from `start` to the
+        last.
 
+        The epoch index values `start`, `stop` must take into account
+        the value of the `initial_epoch` parameter.
+
+    plot_losses : bool or list, default=True
+        - If bool, it specifies the need to plot a subplot of losses.
+        Dictionary keys with the name "loss" and names containing the
+        substring "_loss" are treated as losses keys.
+        - If list, it specifies loss key names of the `history` dictionary
+        that should be plotted into the losses subplot. The subplot will also
+        automatically display epoch dependencies of values with the prefix
+        `val_` of the specified key names.
+
+    plot_metrics : bool or list, default=True
+        - If bool, it specifies the need to plot a subplot of metrics.
+        Dictionary keys that have not been recognized as loss or learning rate
+        keys are treated as metrics keys.
+        - If list, it specifies metric key names of the `history` dictionary
+        that should be plotted into the metrics subplot. The subplot will also
+        automatically display epoch dependencies of values with the prefix
+        `val_` of the specified key names.
+
+    plot_learning_rate : bool or list, default=True
+        - If bool, it specifies the need to plot a subplot of learning rate.
+        Dictionary keys with the name "lr" and names containing the
+        substring "learning_rate" are treated as learning rate keys.
+        - If list, it specifies learning rate key names of the `history`
+        dictionary that should be plotted into the learning rate subplot.
+
+    figsize : None or a tuple (width, height) in inches, default=None.
+        Specifies size of created figure. If `None`,
+        `figsize = (1.5 * default_width, 1.2 * default_height)`, where
+        `default_width` and `default_height` are default width and height of
+        a figure creating by matplotlib library.
+
+    Returns
+    -------
+        `matplotlib.axes.Axes` or `numpy.ndarray` of them
     """
 
     def get_ylims(keys):
         ylim_top = -float("inf")
         ylim_bottom = float("inf")
-        first_epoch_index = max(0, num_ignored_epochs - initial_epoch)
         for key in keys:
-            ylim_top = max(ylim_top, max(history[key][first_epoch_index:]))
-            ylim_bottom = min(
-                ylim_bottom, min(history[key][first_epoch_index:])
-            )
+            ylim_top = max(ylim_top, max(history[key][epochs_slice]))
+            ylim_bottom = min(ylim_bottom, min(history[key][epochs_slice]))
         pad = (ylim_top - ylim_bottom) * 0.05
         if pad == 0:
             pad = 0.01
@@ -219,11 +249,30 @@ def lcurves_by_history(
         )
     n_epochs = list(set_lengths)[0]
 
-    if type(plot_losses) not in [bool, list]:
+    if epoch_range_to_scale is None:
+        epochs_slice = slice(0, n_epochs)
+    elif type(epoch_range_to_scale) is int:
+        epochs_slice = slice(
+            max(0, epoch_range_to_scale - initial_epoch), n_epochs
+        )
+    elif (
+        isinstance(epoch_range_to_scale, (list, tuple))
+        and len(epoch_range_to_scale) == 2
+    ):
+        epochs_slice = slice(
+            max(0, epoch_range_to_scale[0] - initial_epoch),
+            min(n_epochs, max(1, epoch_range_to_scale[1] - initial_epoch + 1)),
+        )
+    else:
+        raise TypeError(
+            "The `epoch_range_to_scale` parameter should be an int value or a list (or a tuple) of two int values."
+        )
+
+    if type(plot_losses) not in [bool, list, tuple]:
         raise TypeError("Параметр plot_losses повинен мати тип bool або list")
-    if type(plot_metrics) not in [bool, list]:
+    if type(plot_metrics) not in [bool, list, tuple]:
         raise TypeError("Параметр plot_metrics повинен мати тип bool або list")
-    if type(plot_learning_rate) not in [bool, list]:
+    if type(plot_learning_rate) not in [bool, list, tuple]:
         raise TypeError(
             "Параметр plot_learning_rate повинен мати тип bool або list"
         )
@@ -257,10 +306,7 @@ def lcurves_by_history(
     # бажана перевірка, щоб не було повторів параметрів на різних графіках
 
     # n_epochs = len(history["loss"])
-    need_to_scale = (
-        initial_epoch < num_ignored_epochs
-        and num_ignored_epochs < initial_epoch + n_epochs
-    )
+    need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs
 
     fig = plt.figure()  # plt.gcf()
     if n_subplots > 1:
@@ -281,24 +327,28 @@ def lcurves_by_history(
         ax.tick_params(
             axis="x",
             which="minor",
-            direction="inout",
-            length=5,
+            direction="in",
+            # length=3,
+            # direction="inout",
+            # length=5,
             bottom=True,
             top=True,
         )
         ax.tick_params(
             axis="x",
             which="major",
-            direction="inout",
-            length=7,
+            direction="in",
+            # length=5,
+            # direction="inout",
+            # length=7,
             bottom=True,
             top=True,
         )
         ax.tick_params(
             axis="y",
             which="minor",
-            direction="inout",
-            length=5,
+            direction="in",
+            # length=5,
             left=True,
             labelleft=True,
             right=True,
@@ -306,8 +356,8 @@ def lcurves_by_history(
         ax.tick_params(
             axis="y",
             which="major",
-            direction="inout",
-            length=7,
+            direction="in",
+            # length=7,
             left=True,
             labelleft=True,
             right=True,
@@ -316,14 +366,14 @@ def lcurves_by_history(
         ax.grid()
         # ax.grid(which="both")
 
-    axs[0].tick_params(axis="x", labeltop=True)
+    # axs[0].tick_params(axis="x", labeltop=True)
     axs[-1].tick_params(axis="x", labelbottom=True)
     axs[-1].set_xlabel("epoch")
 
     x = range(initial_epoch, initial_epoch + n_epochs)
 
     index_subplot = 0
-    kwargs_legend = dict(loc="upper left", bbox_to_anchor=(1.01, 1))
+    kwargs_legend = dict(loc="upper left", bbox_to_anchor=(1.002, 1))
 
     if len(plot_loss_keys) > 0:
         ax = axs[index_subplot]
@@ -331,7 +381,7 @@ def lcurves_by_history(
             ax.plot(x, history[key])
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_loss_keys))
-
+        # ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
         ax.set_ylabel("losses")
         ax.legend(plot_loss_keys, **kwargs_legend)
         index_subplot += 1
@@ -342,7 +392,7 @@ def lcurves_by_history(
             ax.plot(x, history[key])
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_metric_keys))
-
+        # ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
         ax.set_ylabel("metrics")
         ax.legend(plot_metric_keys, **kwargs_legend)
         index_subplot += 1
@@ -375,7 +425,9 @@ def lcurves_by_history(
     else:
         fig.set_size_inches(figsize)
 
-    return
+    if len(axs) > 1:
+        return axs
+    return axs[0]
 
 
 def history_concatenate(history, last_history):
