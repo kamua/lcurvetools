@@ -196,7 +196,7 @@ def lcurves_by_history(
         - If list, it specifies learning rate key names of the `history`
         dictionary that should be plotted into the learning rate subplot.
 
-    figsize : None or a tuple (width, height) in inches, default=None.
+    figsize : a tuple (width, height) in inches or `None`, default=None.
         Specifies size of created figure. If `None`,
         `figsize = (1.5 * default_width, 1.2 * default_height)`, where
         `default_width` and `default_height` are default width and height of
@@ -205,6 +205,29 @@ def lcurves_by_history(
     Returns
     -------
         `matplotlib.axes.Axes` or `numpy.ndarray` of them
+
+    Examples
+    --------
+    >>> from lcurvetools import lcurves_by_history
+    >>> import keras
+
+    [Create keras model](https://keras.io/api/models/):
+
+    >>> model = keras.Model(...) # or keras.Sequential(...)
+
+    [Compile model](https://keras.io/api/models/model_training_apis/#compile-method):
+
+    >>> model.compile(...)
+
+    [Train the model](https://keras.io/api/models/model_training_apis/#fit-method):
+
+    >>> hist = model.fit(...)
+
+    Use `hist.history` attribute to plot learning curves as dependences of
+    values of all keys in the `hist.history` dictonary on an epoch index:
+
+    >>> lcurves_by_history(hist.history)
+
     """
 
     def get_ylims(keys):
