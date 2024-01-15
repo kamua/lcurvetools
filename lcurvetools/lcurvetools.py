@@ -4,258 +4,6 @@ from copy import deepcopy
 import warnings
 
 
-def lcurves_by_MLP_estimator(
-    MLP_estimator,
-    initial_epoch=0,
-    epoch_range_to_scale=0,
-    plot_losses=True,
-    plot_val_scores=True,
-    on_separate_subplots=False,
-    figsize=(7.6, 5.7),
-):
-    """
-    Plot learning curves of the MLP estimator ([MLPClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html)
-    or [MLPRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html))
-    trained with the scikit-learn library as dependencies of loss and
-    validation score values on the epoch index. These dependencies can be
-    shown on one plot with two vertical left and right axes scaled
-    independently or on two separated subplots. The best values are marked
-    on the dependencies (minimum values for losses and maximum values for
-    metrics).
-
-
-    Parameters
-    ----------
-    MLP_estimator : scikit-learn estimator of `MLPClassifier` or `MLPRegressor` classes
-        The estimator must be trained already using the `fit` method.
-
-    initial_epoch : int, default=0
-        The epoch index at which the `fit` method had started to train the
-        model at the last run with the parameter `warm_start=True`. Also,
-        setting `initial_epoch=1` can be useful to convert the epoch index
-        plotted along the horizontal axes of the subplots into the number
-        of passed epochs.
-
-    epoch_range_to_scale : int or list (tuple) of int, default=0
-        Specifies the epoch index range within which the vertical axes with
-        loss and validation score are scaled.
-        - If `epoch_range_to_scale` is a list or a tuple of two int values,
-        then they specify the epoch index limits of the scaling range in the
-        form `[start, stop)`, i.e. as for `slice` and `range` objects.
-        - If `epoch_range_to_scale` is an int value, then it specifies the
-        lower epoch index `start` of the scaling range, and the vertical axes
-        are scaled by epochs with indices from `start` to the last.
-
-        The epoch index values `start`, `stop` must take into account
-        the value of the `initial_epoch` parameter.
-
-    plot_losses : bool, default=True
-        Whether to plot a dependence of loss values on epoch index.
-
-    plot_val_scores : bool, default=True
-        Whether to plot a dependence of validation score values on epoch
-        index. If `MLP_estimator` doesn't have the `validation_scores_`
-        attribute, the value of `plot_val_scores` is ignored and the
-        dependence of validation score doesn't plot.
-
-    on_separate_subplots : bool, default=False
-        Specifies a way of showing dependences of loss and validation score
-        on epoch index when `plot_losses=True`, `plot_val_scores=True` and
-        `MLP_estimator` has the `validation_scores_` attribute.
-        - If `True`, the dependencies are shown on two separated subplots.
-        - If `False`, the dependencies are shown on one plot with two vertical
-        axes scaled independently. Loss values are plotted on the left axis
-        and validation score values are plotted on the right axis.
-
-    figsize : a tuple (width, height) in inches or `None`, default=(7.6, 5.7).
-        Specifies size of creating figure. If `None`, default values of width
-        and height of a figure for the matplotlib library will be used.
-
-    Returns
-    -------
-    numpy array or list of `matplotlib.axes.Axes` object
-        - If dependencies of loss and validation score values on the epoch
-        index are shown on one plot with two vertical axes scaled
-        independently, the first `matplotlib.axes.Axes` object contains
-        a dependence of loss values and the second `matplotlib.axes.Axes`
-        object contains a dependence of validation score values.
-        - If dependencies of loss and validation score values on the epoch
-        index are shown on two separated subplots, each `matplotlib.axes.Axes`
-        object in the numpy array or list corresponds to the built subplot
-        from top to bottom.
-
-    Examples
-    --------
-    >>> from lcurvetools import lcurves_by_MLP_estimator
-    >>> from sklearn.neural_network import MLPClassifier
-
-    [Create](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier) and [fit](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier.fit)
-    the scikit-learn MLP estimator:
-    >>> clf = MLPClassifier(..., early_stopping=True)
-    >>> clf.fit(...)
-
-    Use `clf` object with `loss_curve_` and `validation_scores_` attributes
-    to plot learning curves as dependences of loss and validation score values:
-    >>> lcurves_by_MLP_estimator(clf)
-    """
-    from sklearn import neural_network as nn
-
-    def get_ylims(values):
-        ylim_top = max(values[epochs_slice])
-        ylim_bottom = min(values[epochs_slice])
-        pad = (ylim_top - ylim_bottom) * 0.05
-        if pad == 0:
-            pad = 0.01
-        return dict(bottom=ylim_bottom - pad, top=ylim_top + pad)
-
-    if not (
-        isinstance(MLP_estimator, nn.MLPClassifier)
-        or isinstance(MLP_estimator, nn.MLPRegressor)
-    ):
-        raise TypeError(
-            "The `MLP_estimator` must be a scikit-learn MLP estimator object of"
-            " `MLPClassifier` or `MLPRegressor` class."
-        )
-    if not hasattr(MLP_estimator, "loss_curve_"):
-        raise AttributeError(
-            "The `MLP_estimator` must be fitted. Run `.fit` method of the"
-            " `MLP_estimator` before using `lcurves_by_MLP_estimator`."
-        )
-    if not (plot_losses or plot_val_scores):
-        raise ValueError(
-            "The value of at least one of `plot_losses` and `plot_val_scores`"
-            " parameters should be `True`."
-        )
-    if plot_val_scores and (
-        not hasattr(MLP_estimator, "validation_scores_")
-        or MLP_estimator.validation_scores_ is None
-    ):
-        warnings.warn(
-            "The `validation_scores_` attribute of the `MLP_estimator` object"
-            " is not available or is `None`, so the dependence of validation"
-            " score on an epoch index will not be plotted."
-        )
-        if not plot_losses:
-            warnings.warn(
-                "In addition, `plot_losses = False `, so no dependences are"
-                " plotted."
-            )
-            return
-        plot_val_scores = False
-
-    on_separate_subplots = (
-        on_separate_subplots and plot_losses and plot_val_scores
-    )
-    if on_separate_subplots:
-        axs = lcurves_by_history(
-            {
-                "loss": MLP_estimator.loss_curve_,
-                "validation score": MLP_estimator.validation_scores_,
-            },
-            initial_epoch=initial_epoch,
-            epoch_range_to_scale=epoch_range_to_scale,
-            plot_learning_rate=False,
-            figsize=figsize,
-        )
-        axs[-1].set_ylabel("validation score")
-        axs[0].legend().remove()
-        axs[-1].legend().remove()
-        return axs
-
-    n_epochs = len(MLP_estimator.loss_curve_)
-
-    if epoch_range_to_scale is None:
-        epochs_slice = slice(0, n_epochs)
-    elif type(epoch_range_to_scale) is int:
-        epochs_slice = slice(
-            max(0, epoch_range_to_scale - initial_epoch), n_epochs
-        )
-    elif (
-        isinstance(epoch_range_to_scale, (list, tuple))
-        and len(epoch_range_to_scale) == 2
-    ):
-        epochs_slice = slice(
-            max(0, epoch_range_to_scale[0] - initial_epoch),
-            min(n_epochs, max(1, epoch_range_to_scale[1] - initial_epoch + 1)),
-        )
-    else:
-        raise TypeError(
-            "The `epoch_range_to_scale` parameter should be an int value or a"
-            " list (tuple) of two int values."
-        )
-
-    need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs
-
-    x = range(initial_epoch, initial_epoch + n_epochs)
-
-    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-
-    plt.figure(figsize=figsize)
-
-    ax = plt.gca()
-    ax.minorticks_on()
-    ax.tick_params(axis="both", which="both", direction="in", right=True)
-    ax.tick_params(axis="x", which="both", top=True)
-    ax.set_xlabel("epoch")
-    axs = [ax]
-    if plot_losses and plot_val_scores:
-        axs.append(plt.gca().twinx())
-        axs[0].spines["right"].set_visible(False)
-        axs[1].spines[["left", "top", "bottom"]].set_visible(False)
-        axs[0].tick_params(axis="y", which="both", colors=colors[0])
-        axs[1].minorticks_on()
-        axs[1].tick_params(
-            axis="y", which="both", colors=colors[1], direction="in"
-        )
-        axs[0].spines["left"].set_color(colors[0])
-        axs[1].spines["right"].set_color(colors[1])
-        axs[0].set_ylabel("loss", color=colors[0])
-        axs[1].set_ylabel(
-            "validation score",
-            color=colors[1],
-            rotation=-90,
-            ha="center",
-            va="bottom",
-        )
-        ax.grid(axis="x", linestyle="--")
-        axs[0].grid(axis="y", color=colors[0], linestyle="--")
-        axs[1].grid(axis="y", color=colors[1], linestyle="--")
-    else:
-        ax.grid()
-
-    if plot_losses:
-        axs[0].plot(x, MLP_estimator.loss_curve_, color=colors[0])
-        best_value = min(MLP_estimator.loss_curve_)
-        axs[0].plot(
-            x[MLP_estimator.loss_curve_.index(best_value)],
-            best_value,
-            marker="o",
-            markersize=4,
-            color=colors[0],
-        )
-        if need_to_scale:
-            axs[0].set_ylim(**get_ylims(MLP_estimator.loss_curve_))
-        if not plot_val_scores:
-            axs[0].set_ylabel("loss")
-
-    if plot_val_scores:
-        axs[-1].plot(x, MLP_estimator.validation_scores_, color=colors[1])
-        best_value = max(MLP_estimator.validation_scores_)
-        axs[-1].plot(
-            x[MLP_estimator.validation_scores_.index(best_value)],
-            best_value,
-            marker="o",
-            markersize=4,
-            color=colors[1],
-        )
-        if need_to_scale:
-            axs[-1].set_ylim(**get_ylims(MLP_estimator.validation_scores_))
-        if not plot_losses:
-            axs[-1].set_ylabel("validation score")
-
-    return axs
-
-
 def lcurves_by_history(
     history,
     initial_epoch=0,
@@ -343,8 +91,8 @@ def lcurves_by_history(
 
     Examples
     --------
-    >>> from lcurvetools import lcurves_by_history
     >>> import keras
+    >>> from lcurvetools import lcurves_by_history
 
     [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
     and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
@@ -353,9 +101,10 @@ def lcurves_by_history(
     >>> model.compile(...)
     >>> hist = model.fit(...)
 
-    Use `hist.history` dictionary to plot learning curves as dependences of
-    values of all keys in the dictionary on an epoch index with automatic
-    recognition of keys of losses, metrics and learning rate:
+    Use `hist.history` dictionary to plot the learning curves as the
+    dependences of values of all keys in the dictionary on an epoch
+    index with automatic recognition of keys of losses, metrics and
+    learning rate:
 
     >>> lcurves_by_history(hist.history)
     """
@@ -589,8 +338,8 @@ def history_concatenate(prev_history, last_history):
 
     Examples
     --------
-    >>> from lcurvetools import history_concatenate, lcurves_by_history
     >>> import keras
+    >>> from lcurvetools import history_concatenate, lcurves_by_history
 
     [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
     and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
@@ -640,3 +389,256 @@ def history_concatenate(prev_history, last_history):
             full_history[key] = [None] * prev_epochs + last_history[key]
 
     return full_history
+
+
+def lcurves_by_MLP_estimator(
+    MLP_estimator,
+    initial_epoch=0,
+    epoch_range_to_scale=0,
+    plot_losses=True,
+    plot_val_scores=True,
+    on_separate_subplots=False,
+    figsize=(7.6, 5.7),
+):
+    """
+    Plot learning curves of the MLP estimator ([MLPClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html)
+    or [MLPRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html))
+    trained with the scikit-learn library as dependencies of loss and
+    validation score values on the epoch index. These dependencies can be
+    shown on one plot with two vertical left and right axes scaled
+    independently or on two separated subplots. The best values are marked
+    on the dependencies (minimum values for losses and maximum values for
+    metrics).
+
+
+    Parameters
+    ----------
+    MLP_estimator : scikit-learn estimator of `MLPClassifier` or `MLPRegressor` classes
+        The estimator must be trained already using the `fit` method.
+
+    initial_epoch : int, default=0
+        The epoch index at which the `fit` method had started to train the
+        model at the last run with the parameter `warm_start=True`. Also,
+        setting `initial_epoch=1` can be useful to convert the epoch index
+        plotted along the horizontal axes of the subplots into the number
+        of passed epochs.
+
+    epoch_range_to_scale : int or list (tuple) of int, default=0
+        Specifies the epoch index range within which the vertical axes with
+        loss and validation score are scaled.
+        - If `epoch_range_to_scale` is a list or a tuple of two int values,
+        then they specify the epoch index limits of the scaling range in the
+        form `[start, stop)`, i.e. as for `slice` and `range` objects.
+        - If `epoch_range_to_scale` is an int value, then it specifies the
+        lower epoch index `start` of the scaling range, and the vertical axes
+        are scaled by epochs with indices from `start` to the last.
+
+        The epoch index values `start`, `stop` must take into account
+        the value of the `initial_epoch` parameter.
+
+    plot_losses : bool, default=True
+        Whether to plot a dependence of loss values on epoch index.
+
+    plot_val_scores : bool, default=True
+        Whether to plot a dependence of validation score values on epoch
+        index. If `MLP_estimator` doesn't have the `validation_scores_`
+        attribute, the value of `plot_val_scores` is ignored and the
+        dependence of validation score doesn't plot.
+
+    on_separate_subplots : bool, default=False
+        Specifies a way of showing dependences of loss and validation score
+        on epoch index when `plot_losses=True`, `plot_val_scores=True` and
+        `MLP_estimator` has the `validation_scores_` attribute.
+        - If `True`, the dependencies are shown on two separated subplots.
+        - If `False`, the dependencies are shown on one plot with two vertical
+        axes scaled independently. Loss values are plotted on the left axis
+        and validation score values are plotted on the right axis.
+
+    figsize : a tuple (width, height) in inches or `None`, default=(7.6, 5.7).
+        Specifies size of creating figure. If `None`, default values of width
+        and height of a figure for the matplotlib library will be used.
+
+    Returns
+    -------
+    numpy array or list of `matplotlib.axes.Axes` object
+        - If dependencies of loss and validation score values on the epoch
+        index are shown on one plot with two vertical axes scaled
+        independently, the first `matplotlib.axes.Axes` object contains
+        a dependence of loss values and the second `matplotlib.axes.Axes`
+        object contains a dependence of validation score values.
+        - If dependencies of loss and validation score values on the epoch
+        index are shown on two separated subplots, each `matplotlib.axes.Axes`
+        object in the numpy array or list corresponds to the built subplot
+        from top to bottom.
+
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> from lcurvetools import lcurves_by_MLP_estimator
+
+    [Create](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier) and [fit](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier.fit)
+    the scikit-learn MLP estimator:
+    >>> clf = MLPClassifier(..., early_stopping=True)
+    >>> clf.fit(...)
+
+    Use `clf` object with `loss_curve_` and `validation_scores_` attributes
+    to plot the learning curves as the dependences of loss and validation
+    score values:
+    >>> lcurves_by_MLP_estimator(clf)
+    """
+    from sklearn import neural_network as nn
+
+    def get_ylims(values):
+        ylim_top = max(values[epochs_slice])
+        ylim_bottom = min(values[epochs_slice])
+        pad = (ylim_top - ylim_bottom) * 0.05
+        if pad == 0:
+            pad = 0.01
+        return dict(bottom=ylim_bottom - pad, top=ylim_top + pad)
+
+    if not (
+        isinstance(MLP_estimator, nn.MLPClassifier)
+        or isinstance(MLP_estimator, nn.MLPRegressor)
+    ):
+        raise TypeError(
+            "The `MLP_estimator` must be a scikit-learn MLP estimator object of"
+            " `MLPClassifier` or `MLPRegressor` class."
+        )
+    if not hasattr(MLP_estimator, "loss_curve_"):
+        raise AttributeError(
+            "The `MLP_estimator` must be fitted. Run `.fit` method of the"
+            " `MLP_estimator` before using `lcurves_by_MLP_estimator`."
+        )
+    if not (plot_losses or plot_val_scores):
+        raise ValueError(
+            "The value of at least one of `plot_losses` and `plot_val_scores`"
+            " parameters should be `True`."
+        )
+    if plot_val_scores and (
+        not hasattr(MLP_estimator, "validation_scores_")
+        or MLP_estimator.validation_scores_ is None
+    ):
+        warnings.warn(
+            "The `validation_scores_` attribute of the `MLP_estimator` object"
+            " is not available or is `None`, so the dependence of validation"
+            " score on an epoch index will not be plotted."
+        )
+        if not plot_losses:
+            warnings.warn(
+                "In addition, `plot_losses = False `, so no dependences are"
+                " plotted."
+            )
+            return
+        plot_val_scores = False
+
+    on_separate_subplots = (
+        on_separate_subplots and plot_losses and plot_val_scores
+    )
+    if on_separate_subplots:
+        axs = lcurves_by_history(
+            {
+                "loss": MLP_estimator.loss_curve_,
+                "validation score": MLP_estimator.validation_scores_,
+            },
+            initial_epoch=initial_epoch,
+            epoch_range_to_scale=epoch_range_to_scale,
+            plot_learning_rate=False,
+            figsize=figsize,
+        )
+        axs[-1].set_ylabel("validation score")
+        axs[0].legend().remove()
+        axs[-1].legend().remove()
+        return axs
+
+    n_epochs = len(MLP_estimator.loss_curve_)
+
+    if epoch_range_to_scale is None:
+        epochs_slice = slice(0, n_epochs)
+    elif type(epoch_range_to_scale) is int:
+        epochs_slice = slice(
+            max(0, epoch_range_to_scale - initial_epoch), n_epochs
+        )
+    elif (
+        isinstance(epoch_range_to_scale, (list, tuple))
+        and len(epoch_range_to_scale) == 2
+    ):
+        epochs_slice = slice(
+            max(0, epoch_range_to_scale[0] - initial_epoch),
+            min(n_epochs, max(1, epoch_range_to_scale[1] - initial_epoch + 1)),
+        )
+    else:
+        raise TypeError(
+            "The `epoch_range_to_scale` parameter should be an int value or a"
+            " list (tuple) of two int values."
+        )
+
+    need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs
+
+    x = range(initial_epoch, initial_epoch + n_epochs)
+
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
+    plt.figure(figsize=figsize)
+
+    ax = plt.gca()
+    ax.minorticks_on()
+    ax.tick_params(axis="both", which="both", direction="in", right=True)
+    ax.tick_params(axis="x", which="both", top=True)
+    ax.set_xlabel("epoch")
+    axs = [ax]
+    if plot_losses and plot_val_scores:
+        axs.append(plt.gca().twinx())
+        axs[0].spines["right"].set_visible(False)
+        axs[1].spines[["left", "top", "bottom"]].set_visible(False)
+        axs[0].tick_params(axis="y", which="both", colors=colors[0])
+        axs[1].minorticks_on()
+        axs[1].tick_params(
+            axis="y", which="both", colors=colors[1], direction="in"
+        )
+        axs[0].spines["left"].set_color(colors[0])
+        axs[1].spines["right"].set_color(colors[1])
+        axs[0].set_ylabel("loss", color=colors[0])
+        axs[1].set_ylabel(
+            "validation score",
+            color=colors[1],
+            rotation=-90,
+            ha="center",
+            va="bottom",
+        )
+        ax.grid(axis="x", linestyle="--")
+        axs[0].grid(axis="y", color=colors[0], linestyle="--")
+        axs[1].grid(axis="y", color=colors[1], linestyle="--")
+    else:
+        ax.grid()
+
+    if plot_losses:
+        axs[0].plot(x, MLP_estimator.loss_curve_, color=colors[0])
+        best_value = min(MLP_estimator.loss_curve_)
+        axs[0].plot(
+            x[MLP_estimator.loss_curve_.index(best_value)],
+            best_value,
+            marker="o",
+            markersize=4,
+            color=colors[0],
+        )
+        if need_to_scale:
+            axs[0].set_ylim(**get_ylims(MLP_estimator.loss_curve_))
+        if not plot_val_scores:
+            axs[0].set_ylabel("loss")
+
+    if plot_val_scores:
+        axs[-1].plot(x, MLP_estimator.validation_scores_, color=colors[1])
+        best_value = max(MLP_estimator.validation_scores_)
+        axs[-1].plot(
+            x[MLP_estimator.validation_scores_.index(best_value)],
+            best_value,
+            marker="o",
+            markersize=4,
+            color=colors[1],
+        )
+        if need_to_scale:
+            axs[-1].set_ylim(**get_ylims(MLP_estimator.validation_scores_))
+        if not plot_losses:
+            axs[-1].set_ylabel("validation score")
+
+    return axs
