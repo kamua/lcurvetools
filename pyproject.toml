@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 80
+experimental-string-processing = true
 exclude = '''
 /(
     \.eggs         # exclude a few common directories in the

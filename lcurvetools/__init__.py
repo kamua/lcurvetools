@@ -1,7 +1,6 @@
 from .lcurvetools import (
     lcurves_by_history,
-    lcurves_by_estimator,
-    lcurves,
+    lcurves_by_MLP_estimator,
     history_concatenate,
 )
 
