@@ -4,89 +4,6 @@ from copy import deepcopy
 import warnings
 
 
-def lcurves(
-    history_or_estimator,
-    num_ignored_epochs=0,
-    initial_epoch=0,
-    plot_losses=True,
-    plot_metrics=True,
-    plot_learning_rate=True,
-    figsize=None,
-):
-    """
-    Plot learning curves of the neural network model trained with the keras or
-    scikit-learn framework.
-
-    Parameters
-    ----------
-    history_or_estimator : dictionary or scikit-learn neural network estimator
-        If a dictionary, then it must contain a record of training loss values
-        and metrics values at successive epochs, as well as validation loss
-        values and validation metrics values (if applicable) in the format of
-        the `history` attribute of the `History object`_, which is returned by
-        the `fit`_ method of the model.
-    num_ignored_epochs : int, default=0
-        _description_
-    initial_epoch : int, default=0
-        _description_
-    plot_losses : bool, default=True
-        _description_
-    plot_metrics : bool, default=True
-        _description_
-    plot_learning_rate : bool, default=True
-        _description_
-
-    .. _History object:
-        https://keras.io/api/models/model_training_apis/#:~:text=Returns-,A%20History%20object,-.%20Its%20History.history
-    .. _fit:
-        https://keras.io/api/models/model_training_apis/#fit-method
-
-    Examples
-    --------
-    # https://docs.python.org/3/library/doctest.html
-    >>> # comments are ignored
-    >>> x = 12
-    >>> x
-    12
-    >>> if x == 13:
-    ...     print("yes")
-    ... else:
-    ...     print("no")
-    no
-
-    # https://docs.python.org/3/library/doctest.html#doctest.ELLIPSIS
-    >>> print(list(range(20)))  # doctest: +NORMALIZE_WHITESPACE
-    [0,   1,  2,  3,  4,  5,  6,  7,  8,  9,
-    10,  11, 12, 13, 14, 15, 16, 17, 18, 19]
-    >>> print(list(range(20)))  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    [0,    1, ...,   18,    19]
-    >>> print(list(range(20)))  # doctest: +ELLIPSIS
-    ...                         # doctest: +NORMALIZE_WHITESPACE
-    [0,    1, ...,   18,    19]
-
-    Notes
-    -----
-    More information.  This can be in paragraph form, and uses markdown to
-
-    - show lists
-    - like this
-    - with as many items as you want
-
-    Or to show code blocks, with two colons::
-
-        import pylab as pl
-        x = np.arange(10)
-        y = np.sin(x)
-
-        pl.plot(x, y)
-
-    We use a code block for a pylab example, because plotting does not
-    play well with doctests (doctests runs all the example code, and checks
-    that the output matches).
-    """
-    return
-
-
 def lcurves_by_MLP_estimator(
     MLP_estimator,
     initial_epoch=0,
@@ -336,18 +253,6 @@ def lcurves_by_MLP_estimator(
         if not plot_losses:
             axs[-1].set_ylabel("validation score")
 
-    # fig = plt.gcf()
-    # figwidth = fig.get_figwidth() * 1.2
-    # figheight = fig.get_figheight() * 1.2
-    # if figsize is None:
-    #     # it prints no text "<Figure size ...>"
-    #     fig.set_size_inches(figwidth, figheight)
-    # else:
-    #     fig.set_size_inches(figsize)
-
-    # if len(axs) > 1:
-    #     return axs
-    # return axs[0]
     return axs
 
 
@@ -520,15 +425,17 @@ def lcurves_by_history(
         )
 
     if type(plot_losses) not in [bool, list, tuple]:
-        raise TypeError("Параметр plot_losses повинен мати тип bool або list")
+        raise TypeError(
+            "The `plot_losses` parameter should be bool, list or tuple"
+        )
     if type(plot_metrics) not in [bool, list, tuple]:
-        raise TypeError("Параметр plot_metrics повинен мати тип bool або list")
+        raise TypeError(
+            "The `plot_metrics` parameter should be bool, list or tuple"
+        )
     if type(plot_learning_rate) not in [bool, list, tuple]:
         raise TypeError(
-            "Параметр plot_learning_rate повинен мати тип bool або list"
+            "The `plot_learning_rate` parameter should be bool, list or tuple"
         )
-
-    # бажана перевірка, щоб не було повторів параметрів на різних графіках
 
     loss_keys = [
         name for name in history.keys() if name == "loss" or "_loss" in name
@@ -554,9 +461,10 @@ def lcurves_by_history(
     ]
     plot_lr_keys = get_plot_keys(plot_learning_rate, lr_keys)
     n_subplots += int(len(plot_lr_keys) > 0)
-    # бажана перевірка, щоб не було повторів параметрів на різних графіках
 
-    # n_epochs = len(history["loss"])
+    # It is desirable to check that there are no repetitions of parameters on
+    # different subplots.
+
     need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs
 
     fig = plt.figure(figsize=figsize)  # plt.gcf()
@@ -612,7 +520,6 @@ def lcurves_by_history(
             )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_loss_keys))
-        # ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
         ax.set_ylabel("loss")
         ax.legend(**kwargs_legend)
         index_subplot += 1
@@ -631,7 +538,6 @@ def lcurves_by_history(
             )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_metric_keys))
-        # ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
         ax.set_ylabel("metric")
         ax.legend(**kwargs_legend)
         index_subplot += 1
@@ -645,8 +551,6 @@ def lcurves_by_history(
         ax.yaxis.set_minor_locator(
             ticker.LogLocator(numticks=4, subs=(0.2, 0.4, 0.6, 0.8))
         )
-        # if need_to_scale:
-        #     ax.set_ylim(**get_ylims(plot_lr_keys))
 
         ax.set_ylabel("learning rate")
         ax.legend(**kwargs_legend)
@@ -654,22 +558,9 @@ def lcurves_by_history(
 
     axs[0].set_xlim(left=initial_epoch)
 
-    # print(fig.get_figwidth(), fig.get_figheight())
-    # figwidth = fig.get_figwidth() * 1.2
-    # figheight = fig.get_figheight() * 1.2
     if n_subplots > 1:
         plt.subplots_adjust(hspace=0)
 
-    # if figsize is None:
-    #     # it prints no text "<Figure size ...>"
-    #     fig.set_size_inches(figwidth, figheight)
-    # else:
-    #     fig.set_size_inches(figsize)
-    # print(figwidth, figheight)
-
-    # if len(axs) > 1:
-    #     return axs
-    # return axs[0]
     return axs
 
 
