@@ -22,3 +22,10 @@ hist = model.fit(...)
 ```python
 lcurves_by_history(hist.history)
 ```
+The appearance of the output plot depends on the list of keys in the `hist.history` dictionary, which is determined by the parameters of the `compile` and `fit` methods. For example, for a typical usage of these methods, the list of keys would be `['loss', 'accuracy', 'val_loss', 'val_accuracy']` and the output plot might look like this:
+```python
+model.compile(loss="categorical_crossentropy", metrics=["accuracy"])
+hist = model.fit(x_train, y_train, validation_split=0.1, epochs=50)
+lcurves_by_history(hist.history);
+```
+![typical plot of learning curves](img\image.png)
