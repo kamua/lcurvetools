@@ -28,4 +28,4 @@ model.compile(loss="categorical_crossentropy", metrics=["accuracy"])
 hist = model.fit(x_train, y_train, validation_split=0.1, epochs=50)
 lcurves_by_history(hist.history);
 ```
-![typical plot of learning curves](img\image.png)
+![typical plot of learning curves](img/image.png)
