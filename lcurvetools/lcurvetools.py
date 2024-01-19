@@ -79,6 +79,9 @@ def lcurves_by_history(
         - If list, it specifies learning rate key names of the `history`
         dictionary that should be plotted into the learning rate subplot.
 
+        Learning rate values on the vertical axis are plotted in a logarithmic
+        scale.
+
     figsize : a tuple (width, height) in inches or `None`, default=(7.6, 5.7).
         Specifies size of creating figure. If `None`, default values of width
         and height of a figure for the matplotlib library will be used.

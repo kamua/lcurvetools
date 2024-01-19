@@ -44,4 +44,13 @@ lcurves_by_history(hist.history);
 
 Of course, if the `metrics` parameter of the `compile` method is not specified, then the output figure will not contain a metric subplot.
 
-Usage of callbacks for the `fit` method can add new keys to the `hist.history` dictionary.
+Usage of callbacks for the `fit` method can add new keys to the `hist.history` dictionary. For example, the `ReduceLROnPlateau` callback adds the `lr` key with learning rate values for successive epochs. In this case the output figure will contain additional subplot with learning rate vertical axis in a logarithmic scale and might look like this:
+
+```python
+hist = model.fit(x_train, y_train, validation_split=0.1, epochs=50,
+    callbacks=keras.callbacks.ReduceLROnPlateau(),
+)
+lcurves_by_history(hist.history);
+```
+
+![figure with learning rate subplot](img/learning_rate_subplot.png)
