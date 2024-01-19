@@ -30,6 +30,8 @@ hist = model.fit(...)
 lcurves_by_history(hist.history)
 ```
 
+## Typical appearances of the output figure
+
 The appearance of the output figure depends on the list of keys in the `hist.history` dictionary, which is determined by the parameters of the `compile` and `fit` methods of the model. For example, for a typical usage of these methods, the list of keys would be `['loss', 'accuracy', 'val_loss', 'val_accuracy']` and the output figure will contain 2 subplots with loss and metrics vertical axes and might look like this:
 
 ```python
