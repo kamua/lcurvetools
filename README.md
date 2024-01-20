@@ -46,7 +46,7 @@ lcurves_by_history(hist.history);
 
 Of course, if the `metrics` parameter of the `compile` method is not specified, then the output figure will not contain a metric subplot.
 
-Usage of callbacks for the `fit` method can add new keys to the `hist.history` dictionary. For example, the `ReduceLROnPlateau` callback adds the `lr` key with learning rate values for successive epochs. In this case the output figure will contain additional subplot with learning rate vertical axis in a logarithmic scale and might look like this:
+Usage of callbacks for the `fit` method can add new keys to the `hist.history` dictionary. For example, the [ReduceLROnPlateau](https://keras.io/api/callbacks/reduce_lr_on_plateau/) callback adds the `lr` key with learning rate values for successive epochs. In this case the output figure will contain additional subplot with learning rate vertical axis in a logarithmic scale and might look like this:
 
 ```python
 hist = model.fit(x_train, y_train, validation_split=0.1, epochs=50,
@@ -56,3 +56,14 @@ lcurves_by_history(hist.history);
 ```
 
 ![figure with learning rate subplot](img/learning_rate_subplot.png)
+
+The `lcurves_by_history` function has optional parameters to customize the appearance of the output figure. For example, the `epoch_range_to_scale` option allows to specify the epoch index range within which the subplots of the losses and metrics are scaled.
+
+- If `epoch_range_to_scale` is a list or a tuple of two int values, then they specify the epoch index limits of the scaling range in the form `[start, stop)`, i.e. as for `slice` and `range` objects.
+- If `epoch_range_to_scale` is an int value, then it specifies the lower epoch index `start` of the scaling range, and the losses and metrics subplots are scaled by epochs with indices from `start` to the last.
+
+So, you can exclude the first 5 epochs from the scaling range as follows:
+
+```python
+lcurves_by_history(hist.history, epoch_range_to_scale=5);
+```
