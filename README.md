@@ -67,3 +67,5 @@ So, you can exclude the first 5 epochs from the scaling range as follows:
 ```python
 lcurves_by_history(hist.history, epoch_range_to_scale=5);
 ```
+
+![figure with custom scaling](img/custom_scaling.png)
