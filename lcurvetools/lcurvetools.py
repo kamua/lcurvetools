@@ -318,7 +318,7 @@ def lcurves_by_history(
 
 def history_concatenate(prev_history, last_history):
     """
-    Concatenate two dictionary in the format of the `history` attribute of
+    Concatenate two dictionaries in the format of the `history` attribute of
     the `History` object which is returned by the [fit](https://keras.io/api/models/model_training_apis/#fit-method)
     method of the model.
 
@@ -348,14 +348,14 @@ def history_concatenate(prev_history, last_history):
     and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
     >>> model = keras.Model(...) # or keras.Sequential(...)
     >>> model.compile(...)
-    >>> prev_hist = model.fit(...)
+    >>> hist1 = model.fit(...)
 
-    Compile and fit with possibly other parameter values:
+    Compile as needed and fit using possibly other parameter values:
     >>> model.compile(...)
-    >>> last_hist = model.fit(...)
+    >>> hist2 = model.fit(...)
 
-    Concatenate the dictionaries into one:
-    >>> full_history = history_concatenate(prev_hist.history, last_hist.history)
+    Concatenate the `.history` dictionaries into one:
+    >>> full_history = history_concatenate(hist1.history, hist2.history)
 
     Use `full_history` dictionary to plot full learning curves:
     >>> lcurves_by_history(full_history)

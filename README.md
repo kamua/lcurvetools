@@ -84,3 +84,44 @@ axs[-1].legend().remove()
 ```
 
 ![figure with adjusted axes](img/adjusted_axes.png)
+
+## The `history_concatenate` function to concatenate two `History.history` dictionaries
+
+This function is useful for combining histories of model fitting with two or more runs into a single history to plot full learning curves.
+
+### Usage scheme
+
+- Import the `keras` module and the `history_concatenate`, `lcurves_by_history` function:
+
+```python
+import keras
+from lcurvetools import history_concatenate, lcurves_by_history
+```
+
+- [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
+and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
+
+```python
+model = keras.Model(...) # or keras.Sequential(...)
+model.compile(...)
+hist1 = model.fit(...)
+```
+
+Compile as needed and fit using possibly other parameter values:
+
+```python
+model.compile(...) # as needed
+hist2 = model.fit(...)
+```
+
+- Concatenate the `.history` dictionaries into one:
+
+```python
+full_history = history_concatenate(hist1.history, hist2.history)
+```
+
+- Use `full_history` dictionary to plot full learning curves:
+
+```python
+lcurves_by_history(full_history)
+```
