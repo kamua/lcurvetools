@@ -74,7 +74,7 @@ lcurves_by_history(hist.history, epoch_range_to_scale=5);
 
 For a description of other optional parameters of the `lcurves_by_history` function to customize the appearance of the output figure, see its docstring.
 
-You can also customize the appearance of the figure with methods of the [`matplotlib.axes.Axes`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html) objects whose array is returned by the `lcurves_by_history` function.
+The `lcurves_by_history` function returns a numpy array or a list of the [`matplotlib.axes.Axes`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html) objects corresponded to the built subplots from top to bottom. So, you can use the methods of these objects to customize the appearance of the output figure.
 
 ```python
 axs = lcurves_by_history(history, initial_epoch=1, epoch_range_to_scale=6)
