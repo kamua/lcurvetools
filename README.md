@@ -30,7 +30,7 @@ hist = model.fit(...)
 lcurves_by_history(hist.history)
 ```
 
-## Typical appearances of the output figure
+### Typical appearances of the output figure
 
 The appearance of the output figure depends on the list of keys in the `hist.history` dictionary, which is determined by the parameters of the `compile` and `fit` methods of the model. For example, for a typical usage of these methods, the list of keys would be `['loss', 'accuracy', 'val_loss', 'val_accuracy']` and the output figure will contain 2 subplots with loss and metrics vertical axes and might look like this:
 
@@ -57,6 +57,8 @@ lcurves_by_history(hist.history);
 
 ![figure with learning rate subplot](img/learning_rate_subplot.png)
 
+### Customizing appearances of the output figure
+
 The `lcurves_by_history` function has optional parameters to customize the appearance of the output figure. For example, the `epoch_range_to_scale` option allows to specify the epoch index range within which the subplots of the losses and metrics are scaled.
 
 - If `epoch_range_to_scale` is a list or a tuple of two int values, then they specify the epoch index limits of the scaling range in the form `[start, stop)`, i.e. as for `slice` and `range` objects.
@@ -69,3 +71,16 @@ lcurves_by_history(hist.history, epoch_range_to_scale=5);
 ```
 
 ![figure with custom scaling](img/custom_scaling.png)
+
+For a description of other optional parameters of the `lcurves_by_history` function to customize the appearance of the output figure, see its docstring.
+
+You can also customize the appearance of the figure with methods of the [`matplotlib.axes.Axes`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html) objects whose array is returned by the `lcurves_by_history` function.
+
+```python
+axs = lcurves_by_history(history, initial_epoch=1, epoch_range_to_scale=6)
+axs[0].tick_params(axis="x", labeltop=True)
+axs[-1].set_xlabel('number of passed epochs')
+axs[-1].legend().remove()
+```
+
+![figure with adjusted axes](img/adjusted_axes.png)
