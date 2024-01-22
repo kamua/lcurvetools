@@ -7,21 +7,21 @@ Simple tools for Python language to plot learning curves of a neural network mod
 ## Table of contents
 
 - [The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object](#the-lcurves_by_history-function-to-plot-learning-curves-by-the-history-attribute-of-the-keras-history-object)
-  - [`lcurves_by_history` usage scheme](#lcurves_by_history-usage-scheme)
+  - [Usage scheme](#usage-scheme)
   - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure)
   - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure)
 - [The `history_concatenate` function to concatenate two `History.history` dictionaries](#the-history_concatenate-function-to-concatenate-two-historyhistory-dictionaries)
-  - [`history_concatenate` usage scheme](#history_concatenate-usage-scheme)
+  - [Usage scheme](#usage-scheme-1)
 - [The `lcurves_by_MLP_estimator` function to plot learning curves of the scikit-learn MLP estimator](#the-lcurves_by_mlp_estimator-function-to-plot-learning-curves-of-the-scikit-learn-mlp-estimator)
-  - [`lcurves_by_MLP_estimator` usage scheme](#lcurves_by_mlp_estimator-usage-scheme)
-  - [Typical appearance of the output figure with one plot](#typical-appearance-of-the-output-figure-with-one-plot)
+  - [Usage scheme](#usage-scheme-2)
+  - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure-1)
   - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure-1)
 
 ## The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object
 
 Neural network model training with keras is performed using the [fit](https://keras.io/api/models/model_training_apis/#fit-method) method. The method returns the `History` object with the `history` attribute which is dictionary and contains keys with training and validation values of losses and metrics, as well as learning rate values at successive epochs. The `lcurves_by_history` function uses the `History.history` dictionary to plot the learning curves as the dependences of the above values on the epoch index.
 
-### `lcurves_by_history` usage scheme
+### Usage scheme
 
 - Import the `keras` module and the `lcurves_by_history` function:
 
@@ -103,7 +103,7 @@ axs[-1].legend().remove()
 
 This function is useful for combining histories of model fitting with two or more runs into a single history to plot full learning curves.
 
-### `history_concatenate` usage scheme
+### Usage scheme
 
 - Import the `keras` module and the `history_concatenate`, `lcurves_by_history` function:
 
@@ -144,7 +144,7 @@ lcurves_by_history(full_history);
 
 The scikit-learn library provides 2 classes for building multi-layer perceptron (MLP) models of classification and regression: [`MLPClassifier`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html) and [`MLPRegressor`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html). After creation and fitting of these MLP estimators with using `early_stopping=True` the `MLPClassifier` and `MLPRegressor` objects have the `loss_curve_` and `validation_scores_` attributes with train loss and validation score values at successive epochs. The `lcurves_by_history` function uses the `loss_curve_` and `validation_scores_` attributes to plot the learning curves as the dependences of the above values on the epoch index.
 
-### `lcurves_by_MLP_estimator` usage scheme
+### Usage scheme
 
 - Import the `MLPClassifier` (or `MLPRegressor`) class and the `lcurves_by_MLP_estimator` function:
 
@@ -166,7 +166,7 @@ clf.fit(...)
 lcurves_by_MLP_estimator(clf)
 ```
 
-### Typical appearance of the output figure with one plot
+### Typical appearance of the output figure
 
 The `lcurves_by_MLP_estimator` function with default value of the parameter `on_separate_subplots=False` shows the learning curves of loss and validation score on one plot with two vertical axes scaled independently. Loss values are plotted on the left axis and validation score values are plotted on the right axis. The output figure might look like this:
 
