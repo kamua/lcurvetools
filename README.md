@@ -6,7 +6,7 @@ Simple tools to plot learning curves of a neural network model trained with the 
 
 Neural network model training with keras is performed using the [fit](https://keras.io/api/models/model_training_apis/#fit-method) method. The method returns the `History` object with the `history` attribute which is dictionary and contains keys with training and validation values of losses and metrics, as well as learning rate values at successive epochs. The `lcurves_by_history` function uses the `History.history` dictionary to plot the learning curves as the dependences of the above values on the epoch index.
 
-### Usage scheme
+### `lcurves_by_history` usage scheme
 
 - Import the `keras` module and the `lcurves_by_history` function:
 
@@ -27,10 +27,10 @@ hist = model.fit(...)
 - Use `hist.history` dictionary to plot the learning curves as the dependences of values of all keys in the dictionary on an epoch index with automatic recognition of keys of losses, metrics and learning rate:
 
 ```python
-lcurves_by_history(hist.history)
+lcurves_by_history(hist.history);
 ```
 
-### Typical appearances of the output figure
+### Typical appearance of the output figure
 
 The appearance of the output figure depends on the list of keys in the `hist.history` dictionary, which is determined by the parameters of the `compile` and `fit` methods of the model. For example, for a typical usage of these methods, the list of keys would be `['loss', 'accuracy', 'val_loss', 'val_accuracy']` and the output figure will contain 2 subplots with loss and metrics vertical axes and might look like this:
 
@@ -41,8 +41,7 @@ lcurves_by_history(hist.history);
 ```
 
 ![typical plot of learning curves](img/typical_plot.png)
-
-**Note:** the best values are marked for dependencies of losses and metrics (minimum values for losses and maximum values for metrics).
+**Note:** minimum values of loss curves and the maximum values of metric curves are marked by points.
 
 Of course, if the `metrics` parameter of the `compile` method is not specified, then the output figure will not contain a metric subplot.
 
@@ -57,7 +56,7 @@ lcurves_by_history(hist.history);
 
 ![figure with learning rate subplot](img/learning_rate_subplot.png)
 
-### Customizing appearances of the output figure
+### Customizing appearance of the output figure
 
 The `lcurves_by_history` function has optional parameters to customize the appearance of the output figure. For example, the `epoch_range_to_scale` option allows to specify the epoch index range within which the subplots of the losses and metrics are scaled.
 
@@ -89,7 +88,7 @@ axs[-1].legend().remove()
 
 This function is useful for combining histories of model fitting with two or more runs into a single history to plot full learning curves.
 
-### Usage scheme
+### `history_concatenate` usage scheme
 
 - Import the `keras` module and the `history_concatenate`, `lcurves_by_history` function:
 
@@ -107,10 +106,10 @@ model.compile(...)
 hist1 = model.fit(...)
 ```
 
-Compile as needed and fit using possibly other parameter values:
+- Compile as needed and fit using possibly other parameter values:
 
 ```python
-model.compile(...) # as needed
+model.compile(...) # optional
 hist2 = model.fit(...)
 ```
 
@@ -123,5 +122,70 @@ full_history = history_concatenate(hist1.history, hist2.history)
 - Use `full_history` dictionary to plot full learning curves:
 
 ```python
-lcurves_by_history(full_history)
+lcurves_by_history(full_history);
 ```
+
+## The `lcurves_by_MLP_estimator` function to plot learning curves of the scikit-learn MLP estimator
+
+The scikit-learn library provides 2 classes for building multi-layer perceptron (MLP) models of classification and regression: [`MLPClassifier`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html) and [`MLPRegressor`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html). After creation and fitting of these MLP estimators with using `early_stopping=True` the `MLPClassifier` and `MLPRegressor` objects have the `loss_curve_` and `validation_scores_` attributes with train loss and validation score values at successive epochs. The `lcurves_by_history` function uses the `loss_curve_` and `validation_scores_` attributes to plot the learning curves as the dependences of the above values on the epoch index.
+
+### `lcurves_by_MLP_estimator` usage scheme
+
+- Import the `MLPClassifier` (or `MLPRegressor`) class and the `lcurves_by_MLP_estimator` function:
+
+```python
+from sklearn.neural_network import MLPClassifier
+from lcurvetools import lcurves_by_MLP_estimator
+```
+
+- [Create](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier) and [fit](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier.fit) the scikit-learn MLP estimator:
+
+```python
+clf = MLPClassifier(..., early_stopping=True)
+clf.fit(...)
+```
+
+- Use `clf` object with `loss_curve_` and `validation_scores_` attributes to plot the learning curves as the dependences of loss and validation score values on epoch index:
+
+```python
+lcurves_by_MLP_estimator(clf)
+```
+
+### Typical appearance of the output figure with one plot
+
+The `lcurves_by_MLP_estimator` function with default value of the parameter `on_separate_subplots=False` shows the learning curves of loss and validation score on one plot with two vertical axes scaled independently. Loss values are plotted on the left axis and validation score values are plotted on the right axis. The output figure might look like this:
+
+![lcurves_by_MLP_estimator on one plot](img/lcurves_by_MLP_estimator-1_plot.png)
+**Note:** the minimum value of loss curve and the maximum value of validation score curve are marked by points.
+
+### Customizing appearance of the output figure
+
+The `lcurves_by_MLP_estimator` function has optional parameters to customize the appearance of the output figure. For example,the `lcurves_by_MLP_estimator` function with `on_separate_subplots=True` shows the learning curves of loss and validation score on two separated subplots:
+
+```python
+lcurves_by_MLP_estimator(clf, on_separate_subplots=True)
+```
+
+![lcurves_by_MLP_estimator on two subplot](img/lcurves_by_MLP_estimator-2_subplots.png)
+
+And the `epoch_range_to_scale` option allows to specify the epoch index range within which the subplots of the losses and metrics are scaled (see details about this option in the docstring of the `lcurves_by_MLP_estimator` function).
+
+```python
+lcurves_by_MLP_estimator(clf, epoch_range_to_scale=10);
+```
+
+![lcurves_by_MLP_estimator - custom scaling](img/lcurves_by_MLP_estimator-custom_scaling.png)
+
+For a description of other optional parameters of the `lcurves_by_MLP_estimator` function to customize the appearance of the output figure, see its docstring.
+
+The `lcurves_by_MLP_estimator` function returns a numpy array or a list of the [`matplotlib.axes.Axes`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html) objects of an output figure (see additional details in the `Returns` section of the `lcurves_by_MLP_estimator` function docstring). So, you can use the methods of these objects to customize the appearance of the output figure.
+
+```python
+axs = lcurves_by_MLP_estimator(clf, initial_epoch=1, epoch_range_to_scale=11);
+axs[0].grid(axis='y', visible=False)
+axs[1].grid(axis='y', visible=False)
+axs[0].set_xlabel('number of passed epochs')
+axs[1].set_ylabel('validation accuracy');
+```
+
+![lcurves_by_MLP_estimator - adjusted axes](img/lcurves_by_MLP_estimator-adjusted_axes.png)

@@ -109,7 +109,7 @@ def lcurves_by_history(
     index with automatic recognition of keys of losses, metrics and
     learning rate:
 
-    >>> lcurves_by_history(hist.history)
+    >>> lcurves_by_history(hist.history);
     """
 
     def get_ylims(keys):
@@ -358,7 +358,7 @@ def history_concatenate(prev_history, last_history):
     >>> full_history = history_concatenate(hist1.history, hist2.history)
 
     Use `full_history` dictionary to plot full learning curves:
-    >>> lcurves_by_history(full_history)
+    >>> lcurves_by_history(full_history);
     """
     if not type(prev_history) is dict:
         raise TypeError("The `prev_history` parameter should be a dictionary.")
@@ -486,7 +486,7 @@ def lcurves_by_MLP_estimator(
 
     Use `clf` object with `loss_curve_` and `validation_scores_` attributes
     to plot the learning curves as the dependences of loss and validation
-    score values:
+    score values on epoch index:
     >>> lcurves_by_MLP_estimator(clf)
     """
     from sklearn import neural_network as nn
