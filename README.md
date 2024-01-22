@@ -1,6 +1,21 @@
 # lcurvetools
 
-Simple tools to plot learning curves of a neural network model trained with the keras or scikit-learn framework.
+Simple tools for Python language to plot learning curves of a neural network model trained with the keras or scikit-learn framework.
+
+**NOTE:** All of the plotting examples below are for [interactive Python mode](https://matplotlib.org/stable/users/explain/figure/interactive.html#interactive-mode) in Jupyter-like environments. If you are in non-interactive mode you may need to explicitly call [matplotlib.pyplot.show](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.show.html) to display the window with built plots on your screen.
+
+## Table of contents
+
+- [The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object](#the-lcurves_by_history-function-to-plot-learning-curves-by-the-history-attribute-of-the-keras-history-object)
+  - [`lcurves_by_history` usage scheme](#lcurves_by_history-usage-scheme)
+  - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure)
+  - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure)
+- [The `history_concatenate` function to concatenate two `History.history` dictionaries](#the-history_concatenate-function-to-concatenate-two-historyhistory-dictionaries)
+  - [`history_concatenate` usage scheme](#history_concatenate-usage-scheme)
+- [The `lcurves_by_MLP_estimator` function to plot learning curves of the scikit-learn MLP estimator](#the-lcurves_by_mlp_estimator-function-to-plot-learning-curves-of-the-scikit-learn-mlp-estimator)
+  - [`lcurves_by_MLP_estimator` usage scheme](#lcurves_by_mlp_estimator-usage-scheme)
+  - [Typical appearance of the output figure with one plot](#typical-appearance-of-the-output-figure-with-one-plot)
+  - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure-1)
 
 ## The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object
 
