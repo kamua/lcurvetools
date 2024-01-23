@@ -2,10 +2,13 @@
 
 Simple tools for Python language to plot learning curves of a neural network model trained with the keras or scikit-learn framework.
 
+Currently the `lcurvetools` package provides three functions: `lcurves_by_history`, `history_concatenate` and `lcurves_by_MLP_estimator`.
+
 **NOTE:** All of the plotting examples below are for [interactive Python mode](https://matplotlib.org/stable/users/explain/figure/interactive.html#interactive-mode) in Jupyter-like environments. If you are in non-interactive mode you may need to explicitly call [matplotlib.pyplot.show](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.show.html) to display the window with built plots on your screen.
 
 ## Table of contents
 
+- [Installation](#installation)
 - [The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object](#the-lcurves_by_history-function-to-plot-learning-curves-by-the-history-attribute-of-the-keras-history-object)
   - [Usage scheme](#usage-scheme)
   - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure)
@@ -16,6 +19,20 @@ Simple tools for Python language to plot learning curves of a neural network mod
   - [Usage scheme](#usage-scheme-2)
   - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure-1)
   - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure-1)
+
+## Installation
+
+The easiest way to install the `lcurvetools` package for the first time is using pip:
+
+```sh
+pip install lcurvetools
+```
+
+To update a previously installed package to the latest version, use the command:
+
+```sh
+pip install lcurvetools --upgrade
+```
 
 ## The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object
 
