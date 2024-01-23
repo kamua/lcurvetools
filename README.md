@@ -171,6 +171,7 @@ lcurves_by_MLP_estimator(clf)
 The `lcurves_by_MLP_estimator` function with default value of the parameter `on_separate_subplots=False` shows the learning curves of loss and validation score on one plot with two vertical axes scaled independently. Loss values are plotted on the left axis and validation score values are plotted on the right axis. The output figure might look like this:
 
 ![lcurves_by_MLP_estimator on one plot](img/lcurves_by_MLP_estimator-1_plot.png)
+
 **Note:** the minimum value of loss curve and the maximum value of validation score curve are marked by points.
 
 ### Customizing appearance of the output figure
