@@ -180,7 +180,7 @@ clf.fit(...)
 - Use `clf` object with `loss_curve_` and `validation_scores_` attributes to plot the learning curves as the dependences of loss and validation score values on epoch index:
 
 ```python
-lcurves_by_MLP_estimator(clf)
+lcurves_by_MLP_estimator(clf);
 ```
 
 ### Typical appearance of the output figure
@@ -196,7 +196,7 @@ The `lcurves_by_MLP_estimator` function with default value of the parameter `on_
 The `lcurves_by_MLP_estimator` function has optional parameters to customize the appearance of the output figure. For example,the `lcurves_by_MLP_estimator` function with `on_separate_subplots=True` shows the learning curves of loss and validation score on two separated subplots:
 
 ```python
-lcurves_by_MLP_estimator(clf, on_separate_subplots=True)
+lcurves_by_MLP_estimator(clf, on_separate_subplots=True);
 ```
 
 ![lcurves_by_MLP_estimator on two subplot](img/lcurves_by_MLP_estimator-2_subplots.png)
@@ -214,7 +214,7 @@ For a description of other optional parameters of the `lcurves_by_MLP_estimator`
 The `lcurves_by_MLP_estimator` function returns a numpy array or a list of the [`matplotlib.axes.Axes`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html) objects of an output figure (see additional details in the `Returns` section of the `lcurves_by_MLP_estimator` function docstring). So, you can use the methods of these objects to customize the appearance of the output figure.
 
 ```python
-axs = lcurves_by_MLP_estimator(clf, initial_epoch=1, epoch_range_to_scale=11);
+axs = lcurves_by_MLP_estimator(clf, initial_epoch=1, epoch_range_to_scale=11)
 axs[0].grid(axis='y', visible=False)
 axs[1].grid(axis='y', visible=False)
 axs[0].set_xlabel('number of passed epochs')
