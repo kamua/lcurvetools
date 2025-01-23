@@ -11,7 +11,7 @@ def lcurves_by_history(
     plot_losses=True,
     plot_metrics=True,
     plot_learning_rate=True,
-    figsize=(7.6, 5.7),
+    figsize=None,
 ):
     """
     Plots learning curves of a neural network model trained with the keras
@@ -82,7 +82,7 @@ def lcurves_by_history(
         Learning rate values on the vertical axis are plotted in a logarithmic
         scale.
 
-    figsize : a tuple (width, height) in inches or `None`, default=(7.6, 5.7).
+    figsize : a tuple (width, height) in inches or `None`, default=None.
         Specifies size of creating figure. If `None`, default values of width
         and height of a figure for the matplotlib library will be used.
 
@@ -401,7 +401,7 @@ def lcurves_by_MLP_estimator(
     plot_losses=True,
     plot_val_scores=True,
     on_separate_subplots=False,
-    figsize=(7.6, 5.7),
+    figsize=None,
 ):
     """
     Plot learning curves of the MLP estimator ([MLPClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html)
@@ -457,7 +457,7 @@ def lcurves_by_MLP_estimator(
         axes scaled independently. Loss values are plotted on the left axis
         and validation score values are plotted on the right axis.
 
-    figsize : a tuple (width, height) in inches or `None`, default=(7.6, 5.7).
+    figsize : a tuple (width, height) in inches or `None`, default=None.
         Specifies size of creating figure. If `None`, default values of width
         and height of a figure for the matplotlib library will be used.
 
