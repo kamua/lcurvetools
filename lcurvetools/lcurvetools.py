@@ -4,6 +4,16 @@ from copy import deepcopy
 import warnings
 
 
+def _get_n_epochs(history):
+    n_epochs = set(map(len, history.values()))
+    if len(n_epochs) != 1:
+        raise TypeError(
+            "The values of all `history` keys should be lists of the same"
+            " length, equaled to the number of epochs."
+        )
+    return list(n_epochs)[0]
+
+
 def lcurves_by_history(
     history,
     initial_epoch=0,
@@ -22,8 +32,8 @@ def lcurves_by_history(
 
     Parameters
     ----------
-    history : dict
-        The dictionary could contain keys with training and validation values
+    history : dict or list of dict
+        - If dict, it could contain keys with training and validation values
         of losses and metrics, as well as learning rate values at successive
         epochs in the format of the `history` attribute of the `History`
         object which is returned by the
@@ -31,6 +41,10 @@ def lcurves_by_history(
         method of the model. The values of all keys should be represented by
         numeric lists of the same length, equaled to the number of epochs
         `n_epochs`.
+        - If list of dict, each dict in the list should be in the same format
+        as described above for a single dict. The list of dicts is treated as
+        a collection of fitting histories, and the plots will display all
+        training and validation curves for each history.
 
     initial_epoch : int, default=0
         The epoch index at which the `fit` method had started to train
@@ -110,14 +124,28 @@ def lcurves_by_history(
     learning rate:
 
     >>> lcurves_by_history(hist.history);
+
+    If the model is fitted multiple times, then all the fitting histories
+    can be plotted in a single figure.
+
+    >>> history = []
+    >>> for i in range(5):
+    >>>     model = keras.Model(...) # or keras.Sequential(...)
+    >>>     model.compile(...)
+    >>>     hist = model.fit(...)
+    >>> history.append(hist.history)
+    >>> lcurves_by_history(history);
     """
 
     def get_ylims(keys):
         ylim_top = -float("inf")
         ylim_bottom = float("inf")
-        for key in keys:
-            ylim_top = max(ylim_top, max(history[key][epochs_slice]))
-            ylim_bottom = min(ylim_bottom, min(history[key][epochs_slice]))
+        for hist in history:
+            for key in keys:
+                if key not in hist.keys():
+                    continue
+                ylim_top = max(ylim_top, max(hist[key][epochs_slice]))
+                ylim_bottom = min(ylim_bottom, min(hist[key][epochs_slice]))
         pad = (ylim_top - ylim_bottom) * 0.05
         if pad == 0:
             pad = 0.01
@@ -126,41 +154,47 @@ def lcurves_by_history(
     def get_plot_keys(plot_, _keys):
         if type(plot_) is list:
             if len(plot_) > 0:
-                train_keys = []
-                for key_name in plot_:
-                    if key_name in history.keys():
-                        train_keys.append(key_name)
-                    else:
-                        warnings.warn(
-                            f"The '{key_name}' key not found in the `history`"
-                            " dictionary."
-                        )
-                return train_keys + [
-                    "val_" + key_name
-                    for key_name in plot_
-                    if "val_" + key_name in history.keys()
-                ]
+                keys = []
+                for hist in history:
+                    for key_name in plot_:
+                        if key_name in hist.keys():
+                            keys.append(key_name)
+                    keys += [
+                        "val_" + key_name
+                        for key_name in plot_
+                        if "val_" + key_name in hist.keys()
+                    ]
+                return list(set(keys))
         elif plot_:
             return _keys
         return []
 
-    if not type(history) is dict:
-        raise TypeError("The `history` parameter should be a dictionary.")
-    if len(history) < 1:
-        raise ValueError("The `history` dictionary cannot be empty.")
-    n_epochs = set(map(len, history.values()))
-    if len(n_epochs) != 1:
+    if not isinstance(history, (list, dict)):
         raise TypeError(
-            "The values of all `history` keys should be lists of the same"
-            " length, equaled to the number of epochs."
+            "The `history` parameter should be a dictionary or a list of dictionaries."
         )
-    n_epochs = list(n_epochs)[0]
+    if len(history) == 0:
+        raise ValueError("The `history` list or dictionary cannot be empty.")
+    if isinstance(history, list):
+        for i, hist in enumerate(history):
+            if not type(hist) is dict:
+                raise TypeError(
+                    f"The {i}-th element of the `history` list is not a dictionary."
+                )
+            if len(hist) == 0:
+                raise ValueError(
+                    f"The {i}-th dictionary in the `history` list cannot be empty."
+                )
+    if type(history) is dict:
+        history = [history]
+    n_epochs = [_get_n_epochs(hist) for hist in history]
+    n_epochs_max = max(n_epochs)
 
     if epoch_range_to_scale is None:
-        epochs_slice = slice(0, n_epochs)
+        epochs_slice = slice(0, n_epochs_max)
     elif type(epoch_range_to_scale) is int:
         epochs_slice = slice(
-            max(0, epoch_range_to_scale - initial_epoch), n_epochs
+            max(0, epoch_range_to_scale - initial_epoch), n_epochs_max
         )
     elif (
         isinstance(epoch_range_to_scale, (list, tuple))
@@ -168,7 +202,10 @@ def lcurves_by_history(
     ):
         epochs_slice = slice(
             max(0, epoch_range_to_scale[0] - initial_epoch),
-            min(n_epochs, max(1, epoch_range_to_scale[1] - initial_epoch + 1)),
+            min(
+                n_epochs_max,
+                max(1, epoch_range_to_scale[1] - initial_epoch + 1),
+            ),
         )
     else:
         raise TypeError(
@@ -189,17 +226,24 @@ def lcurves_by_history(
             "The `plot_learning_rate` parameter should be bool, list or tuple"
         )
 
-    loss_keys = [
-        name for name in history.keys() if name == "loss" or "_loss" in name
-    ]
-    lr_keys = [
-        name
-        for name in history.keys()
-        if "lr" == name or "learning_rate" in name
-    ]
-    metric_keys = [
-        name for name in history.keys() if name not in (loss_keys + lr_keys)
-    ]
+    loss_keys = []
+    lr_keys = []
+    metric_keys = []
+    for hist in history:
+        loss_keys += [
+            name for name in hist.keys() if name == "loss" or "_loss" in name
+        ]
+        lr_keys += [
+            name
+            for name in hist.keys()
+            if "lr" == name or "learning_rate" in name
+        ]
+        metric_keys += [
+            name for name in hist.keys() if name not in (loss_keys + lr_keys)
+        ]
+    loss_keys = list(set(loss_keys))
+    lr_keys = list(set(lr_keys))
+    metric_keys = list(set(metric_keys))
 
     plot_loss_keys = get_plot_keys(plot_losses, loss_keys)
     n_subplots = int(len(plot_loss_keys) > 0)
@@ -217,7 +261,7 @@ def lcurves_by_history(
     # It is desirable to check that there are no repetitions of parameters on
     # different subplots.
 
-    need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs
+    need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs_max
 
     fig = plt.figure(figsize=figsize)  # plt.gcf()
     if n_subplots > 1:
@@ -253,7 +297,7 @@ def lcurves_by_history(
     axs[-1].tick_params(axis="x", labelbottom=True)
     axs[-1].set_xlabel("epoch")
 
-    x = range(initial_epoch, initial_epoch + n_epochs)
+    x = range(initial_epoch, initial_epoch + n_epochs_max)
 
     index_subplot = 0
     kwargs_legend = dict(loc="upper left", bbox_to_anchor=(1.002, 1))
@@ -261,15 +305,26 @@ def lcurves_by_history(
     if len(plot_loss_keys) > 0:
         ax = axs[index_subplot]
         for key in plot_loss_keys:
-            lines = ax.plot(x, history[key], label=key)
-            best_value = min(history[key])
-            ax.plot(
-                x[history[key].index(best_value)],
-                best_value,
-                marker="o",
-                markersize=4,
-                color=lines[0].get_color(),
-            )
+            color = None
+            label = key
+            for hist in history:
+                if key not in hist.keys():
+                    continue
+                lines = ax.plot(
+                    x[: len(hist[key])], hist[key], label=label, color=color
+                )
+                if label is not None:
+                    label = None
+                if color is None:
+                    color = lines[-1].get_color()
+                best_value = min(hist[key])
+                ax.plot(
+                    x[hist[key].index(best_value)],
+                    best_value,
+                    marker="o",
+                    markersize=4,
+                    color=color,
+                )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_loss_keys))
         ax.set_ylabel("loss")
@@ -279,15 +334,26 @@ def lcurves_by_history(
     if len(plot_metric_keys) > 0:
         ax = axs[index_subplot]
         for key in plot_metric_keys:
-            lines = ax.plot(x, history[key], label=key)
-            best_value = max(history[key])
-            ax.plot(
-                x[history[key].index(best_value)],
-                best_value,
-                marker="o",
-                markersize=4,
-                color=lines[0].get_color(),
-            )
+            color = None
+            label = key
+            for hist in history:
+                if key not in hist.keys():
+                    continue
+                lines = ax.plot(
+                    x[: len(hist[key])], hist[key], label=label, color=color
+                )
+                if label is not None:
+                    label = None
+                if color is None:
+                    color = lines[-1].get_color()
+                best_value = max(hist[key])
+                ax.plot(
+                    x[hist[key].index(best_value)],
+                    best_value,
+                    marker="o",
+                    markersize=4,
+                    color=color,
+                )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_metric_keys))
         ax.set_ylabel("metric")
@@ -297,7 +363,18 @@ def lcurves_by_history(
     if len(plot_lr_keys) > 0:
         ax = axs[index_subplot]
         for key in plot_lr_keys:
-            ax.plot(x, history[key], label=key)
+            color = None
+            label = key
+            for hist in history:
+                if key not in hist.keys():
+                    continue
+                lines = ax.plot(
+                    x[: len(hist[key])], hist[key], label=label, color=color
+                )
+                if label is not None:
+                    label = None
+                if color is None:
+                    color = lines[-1].get_color()
         ax.set_yscale("log", base=10)
         ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
         ax.yaxis.set_minor_locator(
