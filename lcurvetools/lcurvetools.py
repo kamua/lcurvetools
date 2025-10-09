@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from copy import deepcopy
 import warnings
+from .utils import get_mode_by_metric_name, get_best_epoch_value
 
 
 def _get_n_epochs(history):
