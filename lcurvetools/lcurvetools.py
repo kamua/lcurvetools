@@ -16,13 +16,13 @@ def _get_n_epochs(history):
 
 
 def lcurves_by_history(
-    history,
-    initial_epoch=0,
-    epoch_range_to_scale=0,
-    plot_losses=True,
-    plot_metrics=True,
-    plot_learning_rate=True,
-    figsize=None,
+    history: dict | list[dict],
+    initial_epoch: int = 0,
+    epoch_range_to_scale: int | list[int] | tuple[int, int] = 0,
+    plot_losses: bool | list[str] = True,
+    plot_metrics: bool | list[str] = True,
+    plot_learning_rate: bool | list[str] = True,
+    figsize: tuple[float, float] | None = None,
 ):
     """
     Plots learning curves of a neural network model trained with the keras
@@ -69,25 +69,25 @@ def lcurves_by_history(
         The epoch index values `start`, `stop` must take into account
         the value of the `initial_epoch` parameter.
 
-    plot_losses : bool or list, default=True
+    plot_losses : bool or list of str, default=True
         - If bool, it specifies the need to plot a subplot of losses.
         Dictionary keys with the name "loss" and names containing the
         substring "_loss" are treated as losses keys.
         - If list, it specifies loss key names of the `history` dictionary
         that should be plotted into the losses subplot. The subplot will also
         automatically display epoch dependencies of values with the prefix
-        `val_` of the specified key names.
+        'val_' of the specified key names.
 
-    plot_metrics : bool or list, default=True
+    plot_metrics : bool or list of str, default=True
         - If bool, it specifies the need to plot a subplot of metrics.
         Dictionary keys that have not been recognized as loss or learning rate
         keys are treated as metrics keys.
         - If list, it specifies metric key names of the `history` dictionary
         that should be plotted into the metrics subplot. The subplot will also
         automatically display epoch dependencies of values with the prefix
-        `val_` of the specified key names.
+        'val_' of the specified key names.
 
-    plot_learning_rate : bool or list, default=True
+    plot_learning_rate : bool or list of str, default=True
         - If bool, it specifies the need to plot a subplot of learning rate.
         Dictionary keys with the name "lr" and names containing the
         substring "learning_rate" are treated as learning rate keys.
@@ -318,9 +318,11 @@ def lcurves_by_history(
                     label = None
                 if color is None:
                     color = lines[-1].get_color()
-                best_value = min(hist[key])
+                best_epoch, best_value = get_best_epoch_value(
+                    hist[key], key, mode="min"
+                )
                 ax.plot(
-                    x[hist[key].index(best_value)],
+                    x[best_epoch],
                     best_value,
                     marker="o",
                     markersize=4,
@@ -347,14 +349,19 @@ def lcurves_by_history(
                     label = None
                 if color is None:
                     color = lines[-1].get_color()
-                best_value = max(hist[key])
-                ax.plot(
-                    x[hist[key].index(best_value)],
-                    best_value,
-                    marker="o",
-                    markersize=4,
-                    color=color,
-                )
+                try:
+                    best_epoch, best_value = get_best_epoch_value(
+                        hist[key], key, mode="auto"
+                    )
+                    ax.plot(
+                        x[best_epoch],
+                        best_value,
+                        marker="o",
+                        markersize=4,
+                        color=color,
+                    )
+                except UserWarning as e:
+                    warnings.warn(str(e), UserWarning)
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_metric_keys))
         ax.set_ylabel("metric")
@@ -394,7 +401,7 @@ def lcurves_by_history(
     return axs
 
 
-def history_concatenate(prev_history, last_history):
+def history_concatenate(prev_history: dict, last_history: dict) -> dict:
     """
     Concatenate two dictionaries in the format of the `history` attribute of
     the `History` object which is returned by the [fit](https://keras.io/api/models/model_training_apis/#fit-method)
@@ -473,14 +480,14 @@ def history_concatenate(prev_history, last_history):
 
 
 def lcurves_by_MLP_estimator(
-    MLP_estimator,
-    initial_epoch=0,
-    epoch_range_to_scale=0,
-    plot_losses=True,
-    plot_val_scores=True,
-    on_separate_subplots=False,
-    figsize=None,
-):
+    MLP_estimator: object,
+    initial_epoch: int = 0,
+    epoch_range_to_scale: int | list[int] | tuple[int, int] = 0,
+    plot_losses: bool = True,
+    plot_val_scores: bool = True,
+    on_separate_subplots: bool = False,
+    figsize: tuple[float, float] | None = None,
+) -> list[object]:
     """
     Plot learning curves of the MLP estimator ([MLPClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html)
     or [MLPRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html))

@@ -1,7 +1,36 @@
 import warnings
 
 
-def get_mode_by_metric_name(name: str):
+def get_mode_by_metric_name(name: str) -> str:
+    """
+    Get the optimization mode (min or max) for a metric based on its name.
+    If the name contains "_loss", "loss_", or "error", it is assumed to be
+    minimized; otherwise, it is assumed to be maximized.
+
+    Parameters
+    ----------
+    name : str
+        The name of the metric.
+
+    Returns
+    -------
+    str
+        The mode for the metric ('min' or 'max').
+
+    Examples
+    --------
+    >>> get_mode_by_metric_name("val_loss")
+    'min'
+
+    >>> get_mode_by_metric_name("val_accuracy")
+    'max'
+
+    >>> get_mode_by_metric_name("mean_absolute_percentage_error")
+    'min'
+    """
+    if not isinstance(name, str) or len(name) == 0:
+        raise TypeError("name must be a non-empty string")
+
     name = name.lower()
     if name.startswith("val_"):
         name = name[4:]
@@ -16,18 +45,60 @@ def get_mode_by_metric_name(name: str):
 
 
 def get_best_epoch_value(
-    metric_name: str, metric_values: list[float], mode: str = "auto"
-):
-    if not isinstance(metric_name, str):
-        raise TypeError("metric_name must be a string")
+    metric_values: list[float], metric_name: str = None, mode: str = "auto"
+) -> tuple[int, float]:
+    """
+    Get the epoch index and value of the best metric from a list of metric values.
+
+    The best metric is determined based on the specified optimization mode:
+    - "auto": Automatically determine if the metric should be minimized or maximized
+      based on its name. If the name contains "_loss", "loss_", or "error", it is
+      assumed to be minimized; otherwise, it is assumed to be maximized.
+    - "min": The metric is minimized (lower values are better).
+    - "max": The metric is maximized (higher values are better).
+
+    Parameters
+    ----------
+    metric_values : list of float
+        The values of the metric at each epoch.
+    metric_name : str or `None`, default=None
+        The name of the metric (used for automatic mode detection).
+    mode : str, default="auto"
+        The optimization mode for selecting the best epoch ('auto', 'min', or 'max').
+
+    Returns
+    -------
+    tuple of (int, float)
+        A tuple containing the best epoch index and the best value.
+
+    Examples
+    --------
+    >>> get_best_epoch_value([0.5, 0.4, 0.3, 0.35], 'val_loss')
+    (2, 0.3)
+
+    >>> get_best_epoch_value([0.55, 0.62, 0.6, 0.57], 'accuracy')
+    (1, 0.62)
+
+    >>> get_best_epoch_value([0.5, 0.4, 0.3, 0.35], mode='min')
+    (2, 0.3)
+    """
     if not isinstance(metric_values, list):
         raise TypeError("metric_values must be a list of floats")
     if len(metric_values) == 0:
-        raise ValueError("metric_values must be a non-empty list")
+        raise ValueError(
+            f"metric_values must be a non-empty list but got {metric_values}"
+        )
     if len(metric_values) == 1:
         return 0, metric_values[0]
+    if metric_name is not None:
+        if not isinstance(metric_name, str) or len(metric_name) == 0:
+            raise TypeError(
+                f"metric_name must be a non-empty string or None but got {metric_name}"
+            )
     if mode not in ["auto", "min", "max"]:
-        raise ValueError("mode must be 'auto', 'min', or 'max'")
+        raise ValueError(f"mode must be 'auto', 'min', or 'max' but got {mode}")
+    if mode == "auto" and metric_name is None:
+        raise ValueError("metric_name must be provided when mode is 'auto'")
 
     _mode = get_mode_by_metric_name(metric_name) if mode == "auto" else mode
 
@@ -37,11 +108,15 @@ def get_best_epoch_value(
         if best_epoch <= metric_values.index(min(metric_values)):
             if mode == "auto":
                 raise UserWarning(
-                    f"The metric '{metric_name}' is detected by its name as being maximized, but it appears to not be maximizing.\nConsider using mode='max' or mode='min'."
+                    (
+                        f"The metric '{metric_name}' is detected by its name as being maximized, "
+                        "but it appears to not be maximizing.\nConsider using mode='max' or mode='min'."
+                    )
                 )
             else:
                 warnings.warn(
-                    f"\nThe metric '{metric_name}' seems to not be maximized, but mode='max' was specified.\nCheck if this is correct.",
+                    f"\nThe metric seems to not be maximized, but mode='max' was specified.\n"
+                    "Check if this is correct.",
                     UserWarning,
                 )
         return best_epoch, best_value
@@ -51,11 +126,13 @@ def get_best_epoch_value(
     if best_epoch <= metric_values.index(max(metric_values)):
         if mode == "auto":
             raise UserWarning(
-                f"The metric '{metric_name}' is detected by its name as being minimized, but it appears to not be minimizing.\nConsider using mode='max' or mode='min'."
+                f"The metric '{metric_name}' is detected by its name as being minimized, "
+                "but it appears to not be minimizing.\nConsider using mode='max' or mode='min'."
             )
         else:
             warnings.warn(
-                f"\nThe metric '{metric_name}' seems to not be minimized, but mode='min' was specified.\nCheck if this is correct.",
+                f"\nThe metric seems to not be minimized, but mode='min' was specified.\n"
+                "Check if this is correct.",
                 UserWarning,
             )
 

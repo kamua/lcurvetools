@@ -2,19 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0] - 2025-10-10
 
 ### Added
 
 - Added the ability to plot multiple fitting histories returned by the [`fit`](https://keras.io/api/models/model_training_apis/#fit-method) function on a single figure.
+- Added the `utils` module with two functions: `get_mode_by_metric_name` and `get_best_epoch_value`.
 
 ### Changed
 
 - The `history` parameter of the `lcurves_by_history` function can now accept a list of dictionaries with multiple fitting histories of keras models.
 
 ## [1.0.1] - 2025-01-23
+
+### Changed
 
 The default value for the `figsize` parameter of the `lcurves_by_history` and `lcurves_by_MLP_estimator` functions has been changed to `None`.
 
