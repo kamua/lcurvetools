@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from copy import deepcopy
 import warnings
+
+from pyparsing import alphanums
 from .utils import get_mode_by_metric_name, get_best_epoch_value
 
 
@@ -188,6 +190,9 @@ def lcurves_by_history(
                 )
     if type(history) is dict:
         history = [history]
+        alpha = None
+    else:
+        alpha = 0.8
     n_epochs = [_get_n_epochs(hist) for hist in history]
     n_epochs_max = max(n_epochs)
 
@@ -302,7 +307,7 @@ def lcurves_by_history(
 
     index_subplot = 0
     kwargs_legend = dict(loc="upper left", bbox_to_anchor=(1.002, 1))
-
+    markersize = 5
     if len(plot_loss_keys) > 0:
         ax = axs[index_subplot]
         for key in plot_loss_keys:
@@ -312,7 +317,11 @@ def lcurves_by_history(
                 if key not in hist.keys():
                     continue
                 lines = ax.plot(
-                    x[: len(hist[key])], hist[key], label=label, color=color
+                    x[: len(hist[key])],
+                    hist[key],
+                    label=label,
+                    color=color,
+                    alpha=alpha,
                 )
                 if label is not None:
                     label = None
@@ -325,8 +334,10 @@ def lcurves_by_history(
                     x[best_epoch],
                     best_value,
                     marker="o",
-                    markersize=4,
+                    markersize=markersize,
+                    fillstyle="full",
                     color=color,
+                    alpha=alpha,
                 )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_loss_keys))
@@ -343,7 +354,11 @@ def lcurves_by_history(
                 if key not in hist.keys():
                     continue
                 lines = ax.plot(
-                    x[: len(hist[key])], hist[key], label=label, color=color
+                    x[: len(hist[key])],
+                    hist[key],
+                    label=label,
+                    color=color,
+                    alpha=alpha,
                 )
                 if label is not None:
                     label = None
@@ -357,8 +372,10 @@ def lcurves_by_history(
                         x[best_epoch],
                         best_value,
                         marker="o",
-                        markersize=4,
+                        markersize=markersize,
+                        fillstyle="full",
                         color=color,
+                        alpha=alpha,
                     )
                 except UserWarning as e:
                     warnings.warn(str(e), UserWarning)
@@ -377,7 +394,11 @@ def lcurves_by_history(
                 if key not in hist.keys():
                     continue
                 lines = ax.plot(
-                    x[: len(hist[key])], hist[key], label=label, color=color
+                    x[: len(hist[key])],
+                    hist[key],
+                    label=label,
+                    color=color,
+                    alpha=alpha,
                 )
                 if label is not None:
                     label = None
