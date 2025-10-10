@@ -105,7 +105,7 @@ def get_best_epoch_value(
     if _mode == "max":
         best_value = max(metric_values)
         best_epoch = metric_values.index(best_value)
-        if best_epoch <= metric_values.index(min(metric_values)):
+        if best_value <= metric_values[0]:
             if mode == "auto":
                 raise UserWarning(
                     (
@@ -123,7 +123,7 @@ def get_best_epoch_value(
 
     best_value = min(metric_values)
     best_epoch = metric_values.index(best_value)
-    if best_epoch <= metric_values.index(max(metric_values)):
+    if best_value >= metric_values[0]:
         if mode == "auto":
             raise UserWarning(
                 f"The metric '{metric_name}' is detected by its name as being minimized, "
