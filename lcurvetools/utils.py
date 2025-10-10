@@ -4,8 +4,8 @@ import warnings
 def get_mode_by_metric_name(name: str) -> str:
     """
     Get the optimization mode (min or max) for a metric based on its name.
-    If the name contains "_loss", "loss_", or "error", it is assumed to be
-    minimized; otherwise, it is assumed to be maximized.
+    If the name contains "loss", "error", "hinge", "crossentropy" or "false",
+    it is assumed to be minimized; otherwise, it is assumed to be maximized.
 
     Parameters
     ----------
@@ -35,25 +35,28 @@ def get_mode_by_metric_name(name: str) -> str:
     if name.startswith("val_"):
         name = name[4:]
     if (
-        name.startswith("loss")
-        or "_loss" in name
-        or "loss_" in name
+        "loss" in name
         or "error" in name
+        or "hinge" in name
+        or "crossentropy" in name
+        or "false" in name
     ):
         return "min"
     return "max"
 
 
 def get_best_epoch_value(
-    metric_values: list[float], metric_name: str = None, mode: str = "auto"
+    metric_values: list[float],
+    metric_name: str = None,
+    mode: str = "auto",
+    verbose: bool = True,
 ) -> tuple[int, float]:
     """
     Get the epoch index and value of the best metric from a list of metric values.
 
     The best metric is determined based on the specified optimization mode:
     - "auto": Automatically determine if the metric should be minimized or maximized
-      based on its name. If the name contains "_loss", "loss_", or "error", it is
-      assumed to be minimized; otherwise, it is assumed to be maximized.
+      based on its name with the `lcurves.utils.get_mode_by_metric_name` function.
     - "min": The metric is minimized (lower values are better).
     - "max": The metric is maximized (higher values are better).
 
@@ -65,6 +68,9 @@ def get_best_epoch_value(
         The name of the metric (used for automatic mode detection).
     mode : str, default="auto"
         The optimization mode for selecting the best epoch ('auto', 'min', or 'max').
+    verbose : bool, default=True
+        If True, warnings will be issued if the metric does not appear
+        to be optimizing as expected.
 
     Returns
     -------
@@ -105,13 +111,14 @@ def get_best_epoch_value(
     if _mode == "max":
         best_value = max(metric_values)
         best_epoch = metric_values.index(best_value)
-        if best_value <= metric_values[0]:
+        if verbose and best_value <= metric_values[0]:
             if mode == "auto":
-                raise UserWarning(
+                warnings.warn(
                     (
                         f"The metric '{metric_name}' is detected by its name as being maximized, "
                         "but it appears to not be maximizing.\nConsider using mode='max' or mode='min'."
-                    )
+                    ),
+                    UserWarning,
                 )
             else:
                 warnings.warn(
@@ -123,11 +130,12 @@ def get_best_epoch_value(
 
     best_value = min(metric_values)
     best_epoch = metric_values.index(best_value)
-    if best_value >= metric_values[0]:
+    if verbose and best_value >= metric_values[0]:
         if mode == "auto":
-            raise UserWarning(
+            warnings.warn(
                 f"The metric '{metric_name}' is detected by its name as being minimized, "
-                "but it appears to not be minimizing.\nConsider using mode='max' or mode='min'."
+                "but it appears to not be minimizing.\nConsider using mode='max' or mode='min'.",
+                UserWarning,
             )
         else:
             warnings.warn(

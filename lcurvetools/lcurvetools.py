@@ -24,6 +24,7 @@ def lcurves_by_history(
     plot_losses: bool | list[str] = True,
     plot_metrics: bool | list[str] = True,
     plot_learning_rate: bool | list[str] = True,
+    optimization_modes: dict[str, "min" | "max"] | None = None,
     figsize: tuple[float, float] | None = None,
 ):
     """
@@ -31,7 +32,7 @@ def lcurves_by_history(
     framework. Dependences of values of the losses, metrics and the learning
     rate on the epoch index can be plotted on three subplots along a figure
     column. The best values are marked for dependencies of losses and metrics
-    (minimum values for losses and maximum values for metrics).
+    (minimum values for losses and best values for metrics).
 
     Parameters
     ----------
@@ -98,6 +99,16 @@ def lcurves_by_history(
 
         Learning rate values on the vertical axis are plotted in a logarithmic
         scale.
+
+    optimization_modes : dict or None, default=None
+        Specifies optimization modes for each metric name in the `history` dictionary.
+        For example, if `optimization_modes = {"iou": "max", "hinge": "min"}`
+        the function will consider iou as metric for maximization
+        and hinge as metric for minimization. If a metric name is not
+        found in the `optimization_modes` dictionary, the metric mode will be
+        determined automatically with the function `lcurvetools.utils.get_optimization_mode`.
+        If `None`, the "auto" mode will be used for all metrics.
+        It only affects the marking of the best values on the subplot of metrics.
 
     figsize : a tuple (width, height) in inches or `None`, default=None.
         Specifies size of creating figure. If `None`, default values of width
@@ -172,6 +183,8 @@ def lcurves_by_history(
             return _keys
         return []
 
+    # Input data validation
+
     if not isinstance(history, (list, dict)):
         raise TypeError(
             "The `history` parameter should be a dictionary or a list of dictionaries."
@@ -232,6 +245,23 @@ def lcurves_by_history(
             "The `plot_learning_rate` parameter should be bool, list or tuple"
         )
 
+    if optimization_modes is not None:
+        if not isinstance(optimization_modes, dict):
+            raise TypeError(
+                "The `optimization_modes` parameter should be a dictionary or None."
+            )
+        for key, value in optimization_modes.items():
+            if not isinstance(key, str) or len(key) == 0:
+                raise TypeError(
+                    "The keys of the `optimization_modes` dictionary should be non-empty strings."
+                )
+            if value not in ("min", "max"):
+                raise ValueError(
+                    "The values of the `optimization_modes` dictionary should be 'min' or 'max'."
+                )
+    # End of input data validation
+
+    # Extract keys for losses, learning rates, and metrics
     loss_keys = []
     lr_keys = []
     metric_keys = []
@@ -264,12 +294,11 @@ def lcurves_by_history(
     plot_lr_keys = get_plot_keys(plot_learning_rate, lr_keys)
     n_subplots += int(len(plot_lr_keys) > 0)
 
-    # It is desirable to check that there are no repetitions of parameters on
-    # different subplots.
-
+    # Check if we need to scale the y-axis specified by epoch_range_to_scale
     need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs_max
 
-    fig = plt.figure(figsize=figsize)  # plt.gcf()
+    # Create the figure and subplots
+    fig = plt.figure(figsize=figsize)
     if n_subplots > 1:
         if n_subplots == 2:
             axs = fig.subplots(n_subplots, 1, sharex=True)
@@ -280,6 +309,7 @@ def lcurves_by_history(
     else:
         axs = [plt.gca()]
 
+    # Configure the subplots
     for ax in axs:
         ax.minorticks_on()
         ax.tick_params(
@@ -331,7 +361,7 @@ def lcurves_by_history(
                 if color is None:
                     color = lines[-1].get_color()
                 best_epoch, best_value = get_best_epoch_value(
-                    hist[key], key, mode="min"
+                    hist[key], key, mode="min", verbose=False
                 )
                 ax.plot(
                     x[best_epoch],
@@ -367,21 +397,19 @@ def lcurves_by_history(
                     label = None
                 if color is None:
                     color = lines[-1].get_color()
-                try:
-                    best_epoch, best_value = get_best_epoch_value(
-                        hist[key], key, mode="auto"
-                    )
-                    ax.plot(
-                        x[best_epoch],
-                        best_value,
-                        marker="o",
-                        markersize=markersize,
-                        fillstyle="full",
-                        color=color,
-                        alpha=alpha,
-                    )
-                except UserWarning as e:
-                    warnings.warn(str(e), UserWarning)
+                mode = optimization_modes[key] if optimization_modes else "auto"
+                best_epoch, best_value = get_best_epoch_value(
+                    hist[key], key, mode=mode, verbose=False
+                )
+                ax.plot(
+                    x[best_epoch],
+                    best_value,
+                    marker="o",
+                    markersize=markersize,
+                    fillstyle="full",
+                    color=color,
+                    alpha=alpha,
+                )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_metric_keys))
         ax.set_ylabel("metric")

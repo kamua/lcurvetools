@@ -123,9 +123,9 @@ lcurves_by_history(hist.history);
 
 ![typical plot of learning curves](img/typical_plot.png)
 
-**Note:** minimum values of loss curves and the maximum values of metric curves are marked by points.
-
 Of course, if the `metrics` parameter of the `compile` method is not specified, then the output figure will not contain a metric subplot.
+
+Minimum values of loss curves and the best values of metric curves are marked by points. The best values of metrics are determined based on the specified optimization mode for each metric (see `optimization_modes` parameter). By default, the optimization modes are determined automatically.
 
 Usage of callbacks for the `fit` method can add new keys to the `hist.history` dictionary. For example, the [ReduceLROnPlateau](https://keras.io/api/callbacks/reduce_lr_on_plateau/) callback adds the `lr` key with learning rate values for successive epochs. In this case the output figure will contain additional subplot with learning rate vertical axis in a logarithmic scale and might look like this:
 
