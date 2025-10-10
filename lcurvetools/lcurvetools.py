@@ -298,6 +298,9 @@ def lcurves_by_history(
             right=True,
         )
         ax.yaxis.set_label_position("left")
+        # ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+        # ax.xaxis.set_minor_locator(ticker.MaxNLocator(steps=[1, 4, 10]))
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         ax.grid()
 
     axs[-1].tick_params(axis="x", labelbottom=True)
