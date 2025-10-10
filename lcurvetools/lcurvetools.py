@@ -24,7 +24,7 @@ def lcurves_by_history(
     plot_losses: bool | list[str] = True,
     plot_metrics: bool | list[str] = True,
     plot_learning_rate: bool | list[str] = True,
-    optimization_modes: dict[str, "min" | "max"] | None = None,
+    optimization_modes: dict[str, str] | None = None,
     figsize: tuple[float, float] | None = None,
 ):
     """
