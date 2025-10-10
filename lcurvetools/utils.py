@@ -4,8 +4,9 @@ import warnings
 def get_mode_by_metric_name(name: str) -> str:
     """
     Get the optimization mode (min or max) for a metric based on its name.
-    If the name contains "loss", "error", "hinge", "crossentropy" or "false",
-    it is assumed to be minimized; otherwise, it is assumed to be maximized.
+    If the name contains "loss", "error", "hinge", "crossentropy", "false",
+    "divergence" or "poisson", it is assumed to be minimized; otherwise,
+    it is assumed to be maximized.
 
     Parameters
     ----------
@@ -40,6 +41,8 @@ def get_mode_by_metric_name(name: str) -> str:
         or "hinge" in name
         or "crossentropy" in name
         or "false" in name
+        or "divergence" in name
+        or "poisson" in name
     ):
         return "min"
     return "max"
