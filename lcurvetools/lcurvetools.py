@@ -129,13 +129,13 @@ def lcurves_by_history(
     If the model is fitted multiple times, then all the fitting histories
     can be plotted in a single figure.
 
-    >>> history = []
+    >>> histories = []
     >>> for i in range(5):
     >>>     model = keras.Model(...) # or keras.Sequential(...)
     >>>     model.compile(...)
     >>>     hist = model.fit(...)
-    >>> history.append(hist.history)
-    >>> lcurves_by_history(history);
+    >>>     histories.append(hist.history)
+    >>> lcurves_by_history(histories);
     """
 
     def get_ylims(keys):
@@ -407,8 +407,8 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
     the `History` object which is returned by the [fit](https://keras.io/api/models/model_training_apis/#fit-method)
     method of the model.
 
-    Useful for combining histories of model fitting with two or more runs
-    into a single history to plot full learning curves.
+    Useful for combining histories of model fitting with two or more consecutive
+    runs into a single history to plot full learning curves.
 
     Parameters
     ----------
