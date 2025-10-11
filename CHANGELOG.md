@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- The `history` parameter of the `lcurves_by_history` function can now accept a list of dictionaries with multiple fitting histories of keras models.
+- The `history` parameter of the `lcurves_by_history` function can now accept a list of dictionaries with several fitting histories of keras models.
 
 ## [1.0.1] - 2025-01-23
 

@@ -58,16 +58,18 @@ def lcurves_by_history(
         to convert the epoch index plotted along the horizontal axes of the
         subplots into the number of passed epochs.
 
-    epoch_range_to_scale : int or list (tuple) of int, default=0
+    epoch_range_to_scale : int or list (tuple) of int or None, default=0
         Specifies the epoch index range within which the subplots of the
         losses and metrics are scaled.
         - If `epoch_range_to_scale` is a list or a tuple of two int values,
         then they specify the epoch index limits of the scaling range in the
-        form `[start, stop)`, i.e. as for `slice` and `range` objects.
+        form `[start, stop)`, i.e. as for `slice` and `range` objects. If
+        `start` is `None`, the scaling range starts from the first epoch. If
+        `stop` is `None`, the scaling range ends at the last epoch.
         - If `epoch_range_to_scale` is an int value, then it specifies the
         lower epoch index `start` of the scaling range, and the losses and
         metrics subplots are scaled by epochs with indices from `start` to the
-        last.
+        last. This case is equivalent to `epoch_range_to_scale = [start, None]`.
 
         The epoch index values `start`, `stop` must take into account
         the value of the `initial_epoch` parameter.
@@ -222,12 +224,20 @@ def lcurves_by_history(
         isinstance(epoch_range_to_scale, (list, tuple))
         and len(epoch_range_to_scale) == 2
     ):
-        epochs_slice = slice(
-            max(0, epoch_range_to_scale[0] - initial_epoch),
-            min(
+        if epoch_range_to_scale[0] is None:
+            start_epoch_index = 0
+        else:
+            start_epoch_index = max(0, epoch_range_to_scale[0] - initial_epoch)
+        if epoch_range_to_scale[1] is None:
+            stop_epoch_index = n_epochs_max
+        else:
+            stop_epoch_index = min(
                 n_epochs_max,
                 max(1, epoch_range_to_scale[1] - initial_epoch + 1),
-            ),
+            )
+        epochs_slice = slice(
+            start_epoch_index,
+            stop_epoch_index,
         )
     else:
         raise TypeError(
