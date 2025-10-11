@@ -102,7 +102,8 @@ def get_best_epoch_value(
     if metric_name is not None:
         if not isinstance(metric_name, str) or len(metric_name) == 0:
             raise TypeError(
-                f"metric_name must be a non-empty string or None but got {metric_name}"
+                "metric_name must be a non-empty string or None but got"
+                f" {metric_name}"
             )
     if mode not in ["auto", "min", "max"]:
         raise ValueError(f"mode must be 'auto', 'min', or 'max' but got {mode}")
@@ -117,16 +118,15 @@ def get_best_epoch_value(
         if verbose and best_value <= metric_values[0]:
             if mode == "auto":
                 warnings.warn(
-                    (
-                        f"The metric '{metric_name}' is detected by its name as being maximized, "
-                        "but it appears to not be maximizing.\nConsider using mode='max' or mode='min'."
-                    ),
+                    f"The metric '{metric_name}' is detected by its name as"
+                    " being maximized, but it appears to not be"
+                    " maximizing.\nConsider using mode='max' or mode='min'.",
                     UserWarning,
                 )
             else:
                 warnings.warn(
-                    f"\nThe metric seems to not be maximized, but mode='max' was specified.\n"
-                    "Check if this is correct.",
+                    f"\nThe metric seems to not be maximized, but mode='max'"
+                    f" was specified.\nCheck if this is correct.",
                     UserWarning,
                 )
         return best_epoch, best_value
@@ -136,14 +136,15 @@ def get_best_epoch_value(
     if verbose and best_value >= metric_values[0]:
         if mode == "auto":
             warnings.warn(
-                f"The metric '{metric_name}' is detected by its name as being minimized, "
-                "but it appears to not be minimizing.\nConsider using mode='max' or mode='min'.",
+                f"The metric '{metric_name}' is detected by its name as being"
+                " minimized, but it appears to not be minimizing.\nConsider"
+                " using mode='max' or mode='min'.",
                 UserWarning,
             )
         else:
             warnings.warn(
-                f"\nThe metric seems to not be minimized, but mode='min' was specified.\n"
-                "Check if this is correct.",
+                f"\nThe metric seems to not be minimized, but mode='min' was"
+                f" specified.\nCheck if this is correct.",
                 UserWarning,
             )
 
