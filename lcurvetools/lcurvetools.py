@@ -187,7 +187,8 @@ def lcurves_by_history(
 
     if not isinstance(history, (list, dict)):
         raise TypeError(
-            "The `history` parameter should be a dictionary or a list of dictionaries."
+            "The `history` parameter should be a dictionary or a list of"
+            " dictionaries."
         )
     if len(history) == 0:
         raise ValueError("The `history` list or dictionary cannot be empty.")
@@ -195,11 +196,13 @@ def lcurves_by_history(
         for i, hist in enumerate(history):
             if not type(hist) is dict:
                 raise TypeError(
-                    f"The {i}-th element of the `history` list is not a dictionary."
+                    f"The {i}-th element of the `history` list is not a"
+                    " dictionary."
                 )
             if len(hist) == 0:
                 raise ValueError(
-                    f"The {i}-th dictionary in the `history` list cannot be empty."
+                    f"The {i}-th dictionary in the `history` list cannot be"
+                    " empty."
                 )
     if type(history) is dict:
         history = [history]
@@ -248,16 +251,19 @@ def lcurves_by_history(
     if optimization_modes is not None:
         if not isinstance(optimization_modes, dict):
             raise TypeError(
-                "The `optimization_modes` parameter should be a dictionary or None."
+                "The `optimization_modes` parameter should be a dictionary or"
+                " None."
             )
         for key, value in optimization_modes.items():
             if not isinstance(key, str) or len(key) == 0:
                 raise TypeError(
-                    "The keys of the `optimization_modes` dictionary should be non-empty strings."
+                    "The keys of the `optimization_modes` dictionary should be"
+                    " non-empty strings."
                 )
             if value not in ("min", "max"):
                 raise ValueError(
-                    "The values of the `optimization_modes` dictionary should be 'min' or 'max'."
+                    "The values of the `optimization_modes` dictionary should"
+                    " be 'min' or 'max'."
                 )
     # End of input data validation
 

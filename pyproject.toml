@@ -2,9 +2,12 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.docformatter]
+
 [tool.black]
 line-length = 80
-experimental-string-processing = true
+preview = true
+enable-unstable-feature = ['string_processing']
 exclude = '''
 /(
     \.eggs         # exclude a few common directories in the
