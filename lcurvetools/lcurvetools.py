@@ -104,6 +104,19 @@ def lcurves_by_history(
         Learning rate values on the vertical axis are plotted in a logarithmic
         scale.
 
+    unique_curve_colors : bool, default=False
+        If True, each curve inside the subplots will be assigned a unique color.
+        If False, curves for each metric will share the same color.
+
+    model_names : list of str or None, default=None
+        Specifies model names for each history in the `history` list. The names
+        will be used in the legends of the subplots if `unique_curve_colors` is
+        True. The length of the `model_names` list must be equal to the length
+        of the `history` list.
+        If `None`, the function will use default names.
+        If `history` is a single dictionary or a list with a single dictionary
+        or `unique_curve_colors=False`, the `model_names`parameter is ignored.
+
     optimization_modes : dict or None, default=None
         Specifies optimization modes for each metric name in the `history` dictionary.
         For example, if `optimization_modes = {"iou": "max", "hinge": "min"}`

@@ -9,7 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Added the ability to plot multiple fitting histories returned by the [`fit`](https://keras.io/api/models/model_training_apis/#fit-method) function on a single figure with the `lcurves_by_history` function.
-- Added the `optimization_modes` parameter for the `lcurves_by_history` function to specify optimization modes of metrics ("min" or "max").
+- Added such parameters for the `lcurves_by_history` function:
+  - `unique_curve_colors` which specifies that unique colors must be used for all curves inside a subplot;
+  - `model_names` which specifies model names for each history in the `history` list to use in the legends of the subplots;
+  - `optimization_modes` which specifies optimization modes of metrics ("min" or "max").
 - Added the `utils` module with two functions: `get_mode_by_metric_name` and `get_best_epoch_value`.
 
 ### Changed
