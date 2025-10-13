@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from copy import deepcopy
+import pandas as pd
 import warnings
 
-from pyparsing import alphanums
 from .utils import get_mode_by_metric_name, get_best_epoch_value
 
 
@@ -17,6 +17,34 @@ def _get_n_epochs(history):
     return list(n_epochs)[0]
 
 
+def _get_train_metric_names(keys):
+    train_keys = []
+    for key in keys:
+        if key.startswith("val_"):
+            train_keys.append(key[4:])
+        else:
+            train_keys.append(key)
+    return list(set(train_keys))
+
+
+def _get_colors(
+    num: int, paired_colors: bool
+) -> tuple[tuple[float, float, float]]:
+    tab20_cmap = plt.get_cmap("tab20").colors
+    tab20b_cmap = (
+        plt.get_cmap("tab20b").colors[::2] + plt.get_cmap("tab20b").colors[1::2]
+    )
+    tab20c_cmap = (
+        plt.get_cmap("tab20c").colors[::2] + plt.get_cmap("tab20c").colors[1::2]
+    )
+    cmap = tab20_cmap + tab20b_cmap + tab20c_cmap
+    if not paired_colors:
+        cmap = cmap[::2] + cmap[1::2]
+    while len(cmap) < num:
+        cmap += cmap
+    return cmap[:num]
+
+
 def lcurves_by_history(
     history: dict | list[dict],
     initial_epoch: int = 0,
@@ -24,7 +52,8 @@ def lcurves_by_history(
     plot_losses: bool | list[str] = True,
     plot_metrics: bool | list[str] = True,
     plot_learning_rate: bool | list[str] = True,
-    unique_curve_colors: bool = False,
+    unique_curve_colors: bool = False,  # слід переробити на color_groupping_by = 'auto' | 'model' | 'subset' | None ("auto" - для однієї моделі "subset", для кількох - "model", "model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих своїм кольором, None - всі криві однаковим кольором)
+    color_grouping_by: str = "auto",
     model_names: list[str] = None,
     optimization_modes: dict[str, str] | None = None,
     figsize: tuple[float, float] | None = None,
@@ -298,26 +327,35 @@ def lcurves_by_history(
         raise TypeError(
             "The `unique_curve_colors` parameter should be a boolean value."
         )
-    if len(history) > 1 and unique_curve_colors:
-        if model_names is not None:
-            if not isinstance(model_names, list):
+    # if len(history) > 1 and unique_curve_colors:
+    if model_names is not None:
+        if not isinstance(model_names, list):
+            raise TypeError(
+                "The `model_names` parameter should be a list of strings or"
+                " None."
+            )
+        if len(model_names) != len(history):
+            raise ValueError(
+                "The length of the `model_names` list should be equal to"
+                " the length of the `history` list."
+            )
+        for name in model_names:
+            if not isinstance(name, str):
                 raise TypeError(
-                    "The `model_names` parameter should be a list of strings or"
-                    " None."
+                    "The elements of the `model_names` list should be strings."
                 )
-            if len(model_names) != len(history):
-                raise ValueError(
-                    "The length of the `model_names` list should be equal to"
-                    " the length of the `history` list."
-                )
-            for name in model_names:
-                if not isinstance(name, str):
-                    raise TypeError(
-                        "The elements of the `model_names` list should be"
-                        " strings."
-                    )
+    else:
+        model_names = list(str(i) for i in range(len(history)))
+    if color_grouping_by not in ("auto", "model", "subset", None):
+        raise ValueError(
+            "The `color_grouping_by` parameter should be 'auto', 'model',"
+            " 'subset' or None."
+        )
+    if color_grouping_by == "auto":
+        if len(history) > 1:
+            color_grouping_by = "model"
         else:
-            model_names = list(str(i) for i in range(len(history)))
+            color_grouping_by = "subset"
     # End of input data validation
 
     # Extract keys for losses, learning rates, and metrics
@@ -352,6 +390,38 @@ def lcurves_by_history(
     ]
     plot_lr_keys = get_plot_keys(plot_learning_rate, lr_keys)
     n_subplots += int(len(plot_lr_keys) > 0)
+
+    train_metric_names = _get_train_metric_names(plot_metric_keys)
+
+    val_key_exists = False
+    for key in plot_loss_keys + plot_metric_keys:
+        if key[:4] == "val_":
+            val_key_exists = True
+            break
+
+    # determine colors of curves in the subplots of losses, metrics and learning rates
+    index = (
+        pd.MultiIndex.from_product(
+            [model_names, ["train", "val"]], names=["model", "subset"]
+        )
+        if val_key_exists
+        else model_names
+    )
+    loss_clrs = pd.Series(
+        _get_colors(len(index), paired_colors=val_key_exists), index=index
+    )
+
+    list_of_name_list = [model_names, train_metric_names]
+    if val_key_exists:
+        list_of_name_list.append(["train", "val"])
+    index = pd.MultiIndex.from_product(list_of_name_list)
+    metric_clrs = pd.Series(
+        _get_colors(len(index), paired_colors=val_key_exists), index=index
+    )
+
+    lr_clrs = pd.Series(
+        _get_colors(len(plot_lr_keys), paired_colors=False), index=plot_lr_keys
+    )
 
     # Check if we need to scale the y-axis specified by epoch_range_to_scale
     need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs_max
@@ -469,6 +539,7 @@ def lcurves_by_history(
                     label=_label,
                     color=color,
                     alpha=alpha,
+                    # color=plt.get_cmap("tab10", 0),
                 )
                 if not unique_curve_colors:
                     if label is not None:
