@@ -31,6 +31,8 @@ def _get_colors(
     num: int, paired_colors: bool
 ) -> tuple[tuple[float, float, float]]:
     # https://matplotlib.org/stable/users/explain/colors/colormaps.html#qualitative
+    if num <= 10 and not paired_colors:
+        return plt.get_cmap("tab10").colors[:num]
     tab20_cmap = plt.get_cmap("tab20").colors
     tab20b_cmap = (
         plt.get_cmap("tab20b").colors[::2] + plt.get_cmap("tab20b").colors[1::2]
@@ -53,7 +55,7 @@ def lcurves_by_history(
     plot_losses: bool | list[str] = True,
     plot_metrics: bool | list[str] = True,
     plot_learning_rate: bool | list[str] = True,
-    unique_curve_colors: bool = False,  # слід переробити на color_groupping_by = 'auto' | 'model' | 'subset' | None ("auto" - для однієї моделі "subset", для кількох - "model", "model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих своїм кольором, None - всі криві однаковим кольором)
+    unique_curve_colors: bool = False,  # слід переробити на color_groupping_by = 'auto' | 'model' | 'subset' | None ("auto" - для однієї моделі "subset", для кількох - "model", "model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих val/train своїм кольором, None - всі криві унікальним кольором)
     color_grouping_by: str = "auto",
     model_names: list[str] = None,
     optimization_modes: dict[str, str] | None = None,
@@ -406,24 +408,54 @@ def lcurves_by_history(
     index = pd.MultiIndex.from_product(
         [model_names, prefix_index], names=["model", "prefix"]
     )
-    loss_clrs = pd.Series(
-        _get_colors(len(index), paired_colors=val_key_exists), index=index
-    )
+    if color_grouping_by is None:
+        loss_clrs = pd.Series(
+            _get_colors(len(index), paired_colors=val_key_exists), index=index
+        )
+    else:
+        loss_clrs = pd.Series(index=index, dtype="object")
+        if color_grouping_by == "model":
+            cmap = _get_colors(len(history), paired_colors=False)
+            loss_clrs.loc[:, ""] = cmap
+            loss_clrs.loc[:, "val_"] = cmap
+        else:
+            cmap = _get_colors(2, paired_colors=False)
+            loss_clrs.loc[:, ""] = [cmap[0]] * len(history)
+            loss_clrs.loc[:, "val_"] = [cmap[1]] * len(history)
 
     index = pd.MultiIndex.from_product(
         [model_names, train_metric_names, prefix_index],
         names=["model", "metric", "prefix"],
     )
-    metric_clrs = pd.Series(
-        _get_colors(len(index), paired_colors=val_key_exists), index=index
-    )
+    if color_grouping_by is None:
+        metric_clrs = pd.Series(
+            _get_colors(len(index), paired_colors=val_key_exists), index=index
+        )
+    else:
+        metric_clrs = pd.Series(index=index, dtype="object")
+        if color_grouping_by == "model":
+            cmap = _get_colors(len(history), paired_colors=False)
+            for metric in train_metric_names:
+                metric_clrs.loc[:, metric, ""] = cmap
+                metric_clrs.loc[:, metric, "val_"] = cmap
+        else:
+            cmap = _get_colors(2, paired_colors=False)
+            for metric in train_metric_names:
+                metric_clrs.loc[:, metric, ""] = [cmap[0]] * len(history)
+                metric_clrs.loc[:, metric, "val_"] = [cmap[1]] * len(history)
 
     index = pd.MultiIndex.from_product(
         [model_names, plot_lr_keys], names=["model", "lr"]
     )
-    lr_clrs = pd.Series(
-        _get_colors(len(index), paired_colors=False), index=index
-    )
+    if color_grouping_by is None or color_grouping_by == "model":
+        lr_clrs = pd.Series(
+            _get_colors(len(index), paired_colors=False), index=index
+        )
+    else:
+        lr_clrs = pd.Series(index=index, dtype="object")
+        cmap = _get_colors(1, paired_colors=False)
+        for key in plot_lr_keys:
+            lr_clrs.loc[:, key] = [cmap[0]] * len(history)
 
     # Check if we need to scale the y-axis specified by epoch_range_to_scale
     need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs_max
@@ -637,9 +669,7 @@ def lcurves_by_history(
         for i, hist in enumerate(history):
             for key in plot_lr_keys:
                 color = lr_clrs[model_names[i], key]
-                _label = (
-                    key.replace("learning_rate", "lr") + "_" + model_names[i]
-                )
+                _label = key + "_" + model_names[i]
                 if _label is not None:
                     n_labels += 1
                 lines = ax.plot(
