@@ -33,14 +33,12 @@ def _get_colors(
     # https://matplotlib.org/stable/users/explain/colors/colormaps.html#qualitative
     if num <= 10 and not paired_colors:
         return plt.get_cmap("tab10").colors[:num]
-    tab20_cmap = plt.get_cmap("tab20").colors
-    tab20b_cmap = (
-        plt.get_cmap("tab20b").colors[::2] + plt.get_cmap("tab20b").colors[1::2]
-    )
-    tab20c_cmap = (
-        plt.get_cmap("tab20c").colors[::2] + plt.get_cmap("tab20c").colors[1::2]
-    )
-    cmap = tab20_cmap + tab20b_cmap + tab20c_cmap
+    tab20 = plt.get_cmap("tab20").colors
+    tab20b_0 = plt.get_cmap("tab20b").colors[::2]
+    tab20b_1 = plt.get_cmap("tab20b").colors[1::2]
+    tab20c_0 = plt.get_cmap("tab20c").colors[::2]
+    tab20c_1 = plt.get_cmap("tab20c").colors[1::2]
+    cmap = tab20 + tab20b_0 + tab20c_0 + tab20b_1 + tab20c_1
     if not paired_colors:
         cmap = cmap[::2] + cmap[1::2]
     while len(cmap) < num:
@@ -55,8 +53,9 @@ def lcurves_by_history(
     plot_losses: bool | list[str] = True,
     plot_metrics: bool | list[str] = True,
     plot_learning_rate: bool | list[str] = True,
-    unique_curve_colors: bool = False,  # слід переробити на color_groupping_by = 'auto' | 'model' | 'subset' | None ("auto" - для однієї моделі "subset", для кількох - "model", "model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих val/train своїм кольором, None - всі криві унікальним кольором)
-    color_grouping_by: str = "auto",
+    color_grouping_by: (
+        str | None
+    ) = None,  # color_groupping_by = 'auto' | 'model' | 'subset' | None ("auto" - для однієї моделі "subset", для кількох - "model", "model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих val/train своїм кольором, None - всі криві унікальним кольором)
     model_names: list[str] = None,
     optimization_modes: dict[str, str] | None = None,
     figsize: tuple[float, float] | None = None,
@@ -323,11 +322,6 @@ def lcurves_by_history(
         raise ValueError(
             "The `initial_epoch` parameter should be a non-negative integer."
         )
-    if not isinstance(unique_curve_colors, bool):
-        raise TypeError(
-            "The `unique_curve_colors` parameter should be a boolean value."
-        )
-    # if len(history) > 1 and unique_curve_colors:
     if model_names is not None:
         if not isinstance(model_names, list):
             raise TypeError(
@@ -351,11 +345,8 @@ def lcurves_by_history(
             "The `color_grouping_by` parameter should be 'auto', 'model',"
             " 'subset' or None."
         )
-    if color_grouping_by == "auto":
-        if len(history) > 1:
-            color_grouping_by = "model"
-        else:
-            color_grouping_by = "subset"
+    if color_grouping_by is None and len(history) == 1:
+        color_grouping_by = "subset"
     # End of input data validation
 
     # Extract keys for losses, learning rates, and metrics
@@ -391,9 +382,6 @@ def lcurves_by_history(
     plot_lr_keys = get_plot_keys(plot_learning_rate, lr_keys)
     n_subplots += int(len(plot_lr_keys) > 0)
 
-    train_loss_names = _get_train_metric_names(plot_loss_keys)
-    train_metric_names = _get_train_metric_names(plot_metric_keys)
-
     val_key_exists = False
     for key in plot_loss_keys + plot_metric_keys:
         if key[:4] == "val_":
@@ -401,61 +389,66 @@ def lcurves_by_history(
             break
 
     # determine colors of curves in the subplots of losses, metrics and learning rates
-    prefix_index = [""]
+    prefixes = [""]
     if val_key_exists:
-        prefix_index.append("val_")
+        prefixes.append("val_")
+
+    train_loss_names = _get_train_metric_names(plot_loss_keys)
+    train_metric_names = _get_train_metric_names(plot_metric_keys)
+    lr_names = _get_train_metric_names(plot_lr_keys)
 
     index = pd.MultiIndex.from_product(
-        [model_names, prefix_index], names=["model", "prefix"]
+        [model_names, prefixes], names=["model", "prefix"]
     )
-    if color_grouping_by is None:
-        loss_clrs = pd.Series(
-            _get_colors(len(index), paired_colors=val_key_exists), index=index
-        )
-    else:
-        loss_clrs = pd.Series(index=index, dtype="object")
-        if color_grouping_by == "model":
-            cmap = _get_colors(len(history), paired_colors=False)
-            loss_clrs.loc[:, ""] = cmap
-            loss_clrs.loc[:, "val_"] = cmap
-        else:
-            cmap = _get_colors(2, paired_colors=False)
-            loss_clrs.loc[:, ""] = [cmap[0]] * len(history)
-            loss_clrs.loc[:, "val_"] = [cmap[1]] * len(history)
-
+    loss_clrs = pd.Series(index=index, dtype="object")
     index = pd.MultiIndex.from_product(
-        [model_names, train_metric_names, prefix_index],
+        [model_names, train_metric_names, prefixes],
         names=["model", "metric", "prefix"],
     )
-    if color_grouping_by is None:
-        metric_clrs = pd.Series(
-            _get_colors(len(index), paired_colors=val_key_exists), index=index
-        )
-    else:
-        metric_clrs = pd.Series(index=index, dtype="object")
-        if color_grouping_by == "model":
-            cmap = _get_colors(len(history), paired_colors=False)
-            for metric in train_metric_names:
-                metric_clrs.loc[:, metric, ""] = cmap
-                metric_clrs.loc[:, metric, "val_"] = cmap
-        else:
-            cmap = _get_colors(2, paired_colors=False)
-            for metric in train_metric_names:
-                metric_clrs.loc[:, metric, ""] = [cmap[0]] * len(history)
-                metric_clrs.loc[:, metric, "val_"] = [cmap[1]] * len(history)
-
+    metric_clrs = pd.Series(index=index, dtype="object")
     index = pd.MultiIndex.from_product(
         [model_names, plot_lr_keys], names=["model", "lr"]
     )
-    if color_grouping_by is None or color_grouping_by == "model":
-        lr_clrs = pd.Series(
-            _get_colors(len(index), paired_colors=False), index=index
+    lr_clrs = pd.Series(index=index, dtype="object")
+
+    if color_grouping_by is None:
+        cmap = _get_colors(
+            max(len(loss_clrs), len(metric_clrs), len(lr_clrs)),
+            paired_colors=val_key_exists,
         )
+        loss_clrs.loc[:] = cmap[: len(loss_clrs)]
+        metric_clrs.loc[:, train_metric_names[0]] = loss_clrs.values
+        if len(train_metric_names) > 1:
+            metric_clrs.loc[:, train_metric_names[1] :] = cmap[
+                len(loss_clrs.values) :
+            ]
+        lr_clrs.loc[:, plot_lr_keys[0]] = loss_clrs.loc[:, ""].values
+        if len(lr_names) > 1:
+            lr_clrs.iloc[:, plot_lr_keys[1] :] = cmap[
+                len(loss_clrs.loc[:, ""].values) :
+            ]
+    elif color_grouping_by == "model":
+        cmap = _get_colors(
+            len(history),
+            paired_colors=False,
+        )
+        for prefix in prefixes:
+            loss_clrs.loc[:, prefix] = cmap
+            for metric in train_metric_names:
+                metric_clrs.loc[:, metric, prefix] = cmap
+        for lr_key in plot_lr_keys:
+            lr_clrs.loc[:, lr_key] = cmap
     else:
-        lr_clrs = pd.Series(index=index, dtype="object")
-        cmap = _get_colors(1, paired_colors=False)
-        for key in plot_lr_keys:
-            lr_clrs.loc[:, key] = [cmap[0]] * len(history)
+        cmap = _get_colors(
+            len(prefixes),
+            paired_colors=False,
+        )
+        for model in model_names:
+            loss_clrs.loc[model] = cmap
+            for metric in train_metric_names:
+                metric_clrs.loc[model, metric] = cmap
+            for lr_key in plot_lr_keys:
+                lr_clrs.loc[model, lr_key] = cmap[0]
 
     # Check if we need to scale the y-axis specified by epoch_range_to_scale
     need_to_scale = 0 < epochs_slice.start or epochs_slice.stop < n_epochs_max
@@ -509,7 +502,7 @@ def lcurves_by_history(
         n_labels = 0
         for i, hist in enumerate(history):
             for key in train_loss_names:
-                for prefix in prefix_index:
+                for prefix in prefixes:
                     _key = prefix + key
                     if _key in hist.keys():
                         color = loss_clrs[model_names[i], prefix]
@@ -533,54 +526,12 @@ def lcurves_by_history(
                             fillstyle="full",
                             color=lines[-1].get_color(),
                         )
-        # for key in plot_loss_keys:
-        #     # color = None
-        #     label = key
-        #     for i, hist in enumerate(history):
-        #         if key not in hist.keys():
-        #             continue
-        #         color = loss_clrs[
-        #             model_names[i], "val" if key[:4] == "val_" else ""
-        #         ]
-        #         # _label = (
-        #         #     label + f"_{model_names[i]}"
-        #         #     if unique_curve_colors
-        #         #     else label
-        #         # )
-        #         _label = key + "_" + model_names[i]
-        #         if _label is not None:
-        #             n_labels += 1
-        #         lines = ax.plot(
-        #             x[: len(hist[key])],
-        #             hist[key],
-        #             label=_label,
-        #             color=color,
-        #             alpha=alpha,
-        #         )
-        #         if not unique_curve_colors:
-        #             if label is not None:
-        #                 label = None
-        #             if color is None:
-        #                 color = lines[-1].get_color()
-        #         best_epoch, best_value = get_best_epoch_value(
-        #             hist[key], key, mode="min", verbose=False
-        #         )
-        #         ax.plot(
-        #             x[best_epoch],
-        #             best_value,
-        #             marker="o",
-        #             markersize=markersize,
-        #             fillstyle="full",
-        #             color=lines[-1].get_color(),
-        #             alpha=alpha,
-        #         )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_loss_keys))
         ax.set_ylabel("loss")
-        fontsize = min(
-            10, max(5, 16 - n_labels)
-        )  # if unique_curve_colors else 10
-        ax.legend(fontsize=fontsize, **kwargs_legend)
+        fontsize = min(10, max(5, 16 - n_labels))
+        ncol = min(4, 1 + n_labels // 11)
+        ax.legend(fontsize=fontsize, ncol=ncol, **kwargs_legend)
         index_subplot += 1
 
     if len(plot_metric_keys) > 0:
@@ -588,7 +539,7 @@ def lcurves_by_history(
         n_labels = 0
         for i, hist in enumerate(history):
             for key in train_metric_names:
-                for prefix in prefix_index:
+                for prefix in prefixes:
                     _key = prefix + key
                     if _key in hist.keys():
                         color = metric_clrs[model_names[i], key, prefix]
@@ -617,50 +568,12 @@ def lcurves_by_history(
                             fillstyle="full",
                             color=lines[-1].get_color(),
                         )
-        # for key in plot_metric_keys:
-        #     color = None
-        #     label = key
-        #     for i, hist in enumerate(history):
-        #         if key not in hist.keys():
-        #             continue
-        #         _label = (
-        #             label + f"_{model_names[i]}"
-        #             if unique_curve_colors
-        #             else label
-        #         )
-        #         if _label is not None:
-        #             n_labels += 1
-        #         lines = ax.plot(
-        #             x[: len(hist[key])],
-        #             hist[key],
-        #             label=_label,
-        #             color=color,
-        #             # color=plt.get_cmap("tab10", 0),
-        #         )
-        #         if not unique_curve_colors:
-        #             if label is not None:
-        #                 label = None
-        #             if color is None:
-        #                 color = lines[-1].get_color()
-        #         mode = optimization_modes[key] if optimization_modes else "auto"
-        #         best_epoch, best_value = get_best_epoch_value(
-        #             hist[key], key, mode=mode, verbose=False
-        #         )
-        #         ax.plot(
-        #             x[best_epoch],
-        #             best_value,
-        #             marker="o",
-        #             markersize=markersize,
-        #             fillstyle="full",
-        #             color=lines[-1].get_color(),
-        #         )
         if need_to_scale:
             ax.set_ylim(**get_ylims(plot_metric_keys))
         ax.set_ylabel("metric")
-        fontsize = min(
-            10, max(5, 16 - n_labels)
-        )  # if unique_curve_colors else 10
-        ax.legend(fontsize=fontsize, **kwargs_legend)
+        fontsize = min(10, max(5, 16 - n_labels))
+        ncol = min(4, 1 + n_labels // 11)
+        ax.legend(fontsize=fontsize, ncol=ncol, **kwargs_legend)
         index_subplot += 1
 
     if len(plot_lr_keys) > 0:
@@ -677,42 +590,16 @@ def lcurves_by_history(
                     hist[key],
                     label=_label,
                     color=color,
-                    # alpha=0.7,
                 )
-        # for key in plot_lr_keys:
-        #     color = None
-        #     label = key
-        #     for i, hist in enumerate(history):
-        #         if key not in hist.keys():
-        #             continue
-        #         _label = (
-        #             label + f"_{model_names[i]}"
-        #             if unique_curve_colors
-        #             else label
-        #         )
-        #         if _label is not None:
-        #             n_labels += 1
-        #         lines = ax.plot(
-        #             x[: len(hist[key])],
-        #             hist[key],
-        #             label=_label,
-        #             color=color,
-        #         )
-        #         if not unique_curve_colors:
-        #             if label is not None:
-        #                 label = None
-        #             if color is None:
-        #                 color = lines[-1].get_color()
         ax.set_yscale("log", base=10)
         ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
         ax.yaxis.set_minor_locator(
             ticker.LogLocator(numticks=4, subs=(0.2, 0.4, 0.6, 0.8))
         )
         ax.set_ylabel("learning rate")
-        fontsize = min(
-            10, max(5, 14 - n_labels)
-        )  # if unique_curve_colors else 10
-        ax.legend(fontsize=fontsize, **kwargs_legend)
+        fontsize = min(10, max(5, 14 - n_labels))
+        ncol = min(4, 1 + n_labels // 11)
+        ax.legend(fontsize=fontsize, ncol=ncol, **kwargs_legend)
         index_subplot += 1
 
     axs[0].set_xlim(
