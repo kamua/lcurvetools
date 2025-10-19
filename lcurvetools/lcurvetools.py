@@ -47,7 +47,7 @@ def _get_colors(
 
 
 def lcurves_by_history(
-    history: dict | list[dict],
+    histories: dict | list[dict],
     initial_epoch: int = 0,
     epoch_range_to_scale: int | list[int] | tuple[int, int] = 0,
     plot_losses: bool | list[str] = True,
@@ -55,7 +55,7 @@ def lcurves_by_history(
     plot_learning_rate: bool | list[str] = True,
     color_grouping_by: (
         str | None
-    ) = None,  # color_groupping_by = 'auto' | 'model' | 'subset' | None ("auto" - для однієї моделі "subset", для кількох - "model", "model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих val/train своїм кольором, None - всі криві унікальним кольором)
+    ) = None,  # color_groupping_by = 'model' | 'subset' | None ("model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих val/train своїм кольором, None - всі криві унікальним кольором)
     model_names: list[str] = None,
     optimization_modes: dict[str, str] | None = None,
     figsize: tuple[float, float] | None = None,
@@ -69,7 +69,7 @@ def lcurves_by_history(
 
     Parameters
     ----------
-    history : dict or list of dict
+    histories : dict or list of dict
         - If dict, it could contain keys with training and validation values
         of losses and metrics, as well as learning rate values at successive
         epochs in the format of the `history` attribute of the `History`
@@ -111,7 +111,7 @@ def lcurves_by_history(
         - If bool, it specifies the need to plot a subplot of losses.
         Dictionary keys with the name "loss" and names containing the
         substring "_loss" are treated as losses keys.
-        - If list, it specifies loss key names of the `history` dictionary
+        - If list, it specifies loss key names of the `histories` dictionaries
         that should be plotted into the losses subplot. The subplot will also
         automatically display epoch dependencies of values with the prefix
         'val_' of the specified key names.
@@ -120,7 +120,7 @@ def lcurves_by_history(
         - If bool, it specifies the need to plot a subplot of metrics.
         Dictionary keys that have not been recognized as loss or learning rate
         keys are treated as metrics keys.
-        - If list, it specifies metric key names of the `history` dictionary
+        - If list, it specifies metric key names of the `histories` dictionaries
         that should be plotted into the metrics subplot. The subplot will also
         automatically display epoch dependencies of values with the prefix
         'val_' of the specified key names.
@@ -129,27 +129,30 @@ def lcurves_by_history(
         - If bool, it specifies the need to plot a subplot of learning rate.
         Dictionary keys with the name "lr" and names containing the
         substring "learning_rate" are treated as learning rate keys.
-        - If list, it specifies learning rate key names of the `history`
-        dictionary that should be plotted into the learning rate subplot.
+        - If list, it specifies learning rate key names of the `histories`
+        dictionaries that should be plotted into the learning rate subplot.
 
         Learning rate values on the vertical axis are plotted in a logarithmic
         scale.
 
-    unique_curve_colors : bool, default=False
-        If True, each curve inside the subplots will be assigned a unique color.
-        If False, curves for each metric will share the same color.
+    color_grouping_by : str or None, default=None
+        Specifies how colors of curves in the subplots are grouped.
+        - If 'model', all curves corresponding to a single model history
+        (a single dictionary in the `histories` list) are plotted in the same
+        color.
+        - If 'subset', all training curves are plotted in one color, and
+        all validation curves are plotted in another color.
+        - If None, each curve is plotted in a unique color.
 
     model_names : list of str or None, default=None
-        Specifies model names for each history in the `history` list. The names
+        Specifies model names for each history in the `histories` list. The names
         will be used in the legends of the subplots if `unique_curve_colors` is
         True. The length of the `model_names` list must be equal to the length
-        of the `history` list.
+        of the `histories` list.
         If `None`, the function will use default names.
-        If `history` is a single dictionary or a list with a single dictionary
-        or `unique_curve_colors=False`, the `model_names`parameter is ignored.
 
     optimization_modes : dict or None, default=None
-        Specifies optimization modes for each metric name in the `history` dictionary.
+        Specifies optimization modes for each metric name in the `histories` dictionaries.
         For example, if `optimization_modes = {"iou": "max", "hinge": "min"}`
         the function will consider iou as metric for maximization
         and hinge as metric for minimization. If a metric name is not
@@ -202,7 +205,7 @@ def lcurves_by_history(
     def get_ylims(keys):
         ylim_top = -float("inf")
         ylim_bottom = float("inf")
-        for hist in history:
+        for hist in histories:
             for key in keys:
                 if key not in hist.keys():
                     continue
@@ -217,7 +220,7 @@ def lcurves_by_history(
         if type(plot_) is list:
             if len(plot_) > 0:
                 keys = []
-                for hist in history:
+                for hist in histories:
                     for key_name in plot_:
                         if key_name in hist.keys():
                             keys.append(key_name)
@@ -233,28 +236,28 @@ def lcurves_by_history(
 
     # Input data validation
 
-    if not isinstance(history, (list, dict)):
+    if not isinstance(histories, (list, dict)):
         raise TypeError(
-            "The `history` parameter should be a dictionary or a list of"
+            "The `histories` parameter should be a dictionary or a list of"
             " dictionaries."
         )
-    if len(history) == 0:
-        raise ValueError("The `history` list or dictionary cannot be empty.")
-    if isinstance(history, list):
-        for i, hist in enumerate(history):
+    if len(histories) == 0:
+        raise ValueError("The `histories` list or dictionary cannot be empty.")
+    if isinstance(histories, list):
+        for i, hist in enumerate(histories):
             if not type(hist) is dict:
                 raise TypeError(
-                    f"The {i}-th element of the `history` list is not a"
+                    f"The {i}-th element of the `histories` list is not a"
                     " dictionary."
                 )
             if len(hist) == 0:
                 raise ValueError(
-                    f"The {i}-th dictionary in the `history` list cannot be"
+                    f"The {i}-th dictionary in the `histories` list cannot be"
                     " empty."
                 )
-    if type(history) is dict:
-        history = [history]
-    n_epochs = [_get_n_epochs(hist) for hist in history]
+    if type(histories) is dict:
+        histories = [histories]
+    n_epochs = [_get_n_epochs(hist) for hist in histories]
     n_epochs_max = max(n_epochs)
 
     if epoch_range_to_scale is None:
@@ -328,10 +331,10 @@ def lcurves_by_history(
                 "The `model_names` parameter should be a list of strings or"
                 " None."
             )
-        if len(model_names) != len(history):
+        if len(model_names) != len(histories):
             raise ValueError(
                 "The length of the `model_names` list should be equal to"
-                " the length of the `history` list."
+                " the length of the `histories` list."
             )
         for name in model_names:
             if not isinstance(name, str):
@@ -339,21 +342,19 @@ def lcurves_by_history(
                     "The elements of the `model_names` list should be strings."
                 )
     else:
-        model_names = list(str(i) for i in range(len(history)))
-    if color_grouping_by not in ("auto", "model", "subset", None):
+        model_names = list(str(i) for i in range(len(histories)))
+    if color_grouping_by not in ("model", "subset", None):
         raise ValueError(
-            "The `color_grouping_by` parameter should be 'auto', 'model',"
+            "The `color_grouping_by` parameter should be 'model',"
             " 'subset' or None."
         )
-    if color_grouping_by is None and len(history) == 1:
-        color_grouping_by = "subset"
     # End of input data validation
 
     # Extract keys for losses, learning rates, and metrics
     loss_keys = []
     lr_keys = []
     metric_keys = []
-    for hist in history:
+    for hist in histories:
         loss_keys += [
             name for name in hist.keys() if name == "loss" or "_loss" in name
         ]
@@ -381,6 +382,13 @@ def lcurves_by_history(
     ]
     plot_lr_keys = get_plot_keys(plot_learning_rate, lr_keys)
     n_subplots += int(len(plot_lr_keys) > 0)
+
+    if (
+        color_grouping_by is None
+        and len(histories) == 1
+        and len(plot_metric_keys) < 2
+    ):
+        color_grouping_by = "subset"
 
     val_key_exists = False
     for key in plot_loss_keys + plot_metric_keys:
@@ -429,7 +437,7 @@ def lcurves_by_history(
             ]
     elif color_grouping_by == "model":
         cmap = _get_colors(
-            len(history),
+            len(histories),
             paired_colors=False,
         )
         for prefix in prefixes:
@@ -500,7 +508,7 @@ def lcurves_by_history(
     if len(plot_loss_keys) > 0:
         ax = axs[index_subplot]
         n_labels = 0
-        for i, hist in enumerate(history):
+        for i, hist in enumerate(histories):
             for key in train_loss_names:
                 for prefix in prefixes:
                     _key = prefix + key
@@ -537,7 +545,7 @@ def lcurves_by_history(
     if len(plot_metric_keys) > 0:
         ax = axs[index_subplot]
         n_labels = 0
-        for i, hist in enumerate(history):
+        for i, hist in enumerate(histories):
             for key in train_metric_names:
                 for prefix in prefixes:
                     _key = prefix + key
@@ -579,7 +587,7 @@ def lcurves_by_history(
     if len(plot_lr_keys) > 0:
         ax = axs[index_subplot]
         n_labels = 0
-        for i, hist in enumerate(history):
+        for i, hist in enumerate(histories):
             for key in plot_lr_keys:
                 color = lr_clrs[model_names[i], key]
                 _label = key + "_" + model_names[i]
