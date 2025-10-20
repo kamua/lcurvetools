@@ -53,9 +53,7 @@ def lcurves_by_history(
     plot_losses: bool | list[str] = True,
     plot_metrics: bool | list[str] = True,
     plot_learning_rate: bool | list[str] = True,
-    color_grouping_by: (
-        str | None
-    ) = None,  # color_groupping_by = 'model' | 'subset' | None ("model" - кожна модель своїм кольором, "subset" - кожен піднабір кривих val/train своїм кольором, None - всі криві унікальним кольором)
+    color_grouping_by: str | None = None,
     model_names: list[str] = None,
     optimization_modes: dict[str, str] | None = None,
     figsize: tuple[float, float] | None = None,
@@ -142,7 +140,10 @@ def lcurves_by_history(
         color.
         - If 'subset', all training curves are plotted in one color, and
         all validation curves are plotted in another color.
-        - If None, each curve is plotted in a unique color.
+        - If 'metrics', all curves corresponding to a single metric name inside
+        the subplot of metrics are plotted in the same color. In the another
+        subplots they are plotted in unique colors.
+        - If None, all curves inside each subplot are plotted in unique colors.
 
     model_names : list of str or None, default=None
         Specifies model names for each history in the `histories` list. The names
@@ -343,10 +344,10 @@ def lcurves_by_history(
                 )
     else:
         model_names = list(str(i) for i in range(len(histories)))
-    if color_grouping_by not in ("model", "subset", None):
+    if color_grouping_by not in ("model", "subset", "metrics", None):
         raise ValueError(
             "The `color_grouping_by` parameter should be 'model',"
-            " 'subset' or None."
+            " 'subset', 'metrics', or None."
         )
     # End of input data validation
 
@@ -419,22 +420,33 @@ def lcurves_by_history(
     )
     lr_clrs = pd.Series(index=index, dtype="object")
 
-    if color_grouping_by is None:
+    if color_grouping_by is None or color_grouping_by == "metrics":
         cmap = _get_colors(
             max(len(loss_clrs), len(metric_clrs), len(lr_clrs)),
             paired_colors=val_key_exists,
         )
         loss_clrs.loc[:] = cmap[: len(loss_clrs)]
-        metric_clrs.loc[:, train_metric_names[0]] = loss_clrs.values
-        if len(train_metric_names) > 1:
-            metric_clrs.loc[:, train_metric_names[1] :] = cmap[
-                len(loss_clrs.values) :
-            ]
         lr_clrs.loc[:, plot_lr_keys[0]] = loss_clrs.loc[:, ""].values
         if len(lr_names) > 1:
             lr_clrs.iloc[:, plot_lr_keys[1] :] = cmap[
                 len(loss_clrs.loc[:, ""].values) :
             ]
+        if color_grouping_by is None:
+            metric_clrs.loc[:, train_metric_names[0]] = loss_clrs.values
+            if len(train_metric_names) > 1:
+                metric_clrs.loc[:, train_metric_names[1] :] = cmap[
+                    len(loss_clrs.values) :
+                ]
+        else:  # color_grouping_by == "metrics"
+            cmap = _get_colors(
+                len(train_metric_names),
+                paired_colors=False,
+            )
+            for model in model_names:
+                for i, metric in enumerate(train_metric_names):
+                    for prefix in prefixes:
+                        metric_clrs.loc[model, metric, prefix] = cmap[i]
+
     elif color_grouping_by == "model":
         cmap = _get_colors(
             len(histories),
