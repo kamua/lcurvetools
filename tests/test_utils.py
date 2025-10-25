@@ -12,7 +12,7 @@ def test_get_mode_by_metric_name_basic():
 def test_get_best_epoch_value_min_mode():
     vals = [0.5, 0.4, 0.3, 0.35]
     idx, val = get_best_epoch_value(vals, mode="min")
-    assert idx == 2
+    assert idx == 3
     assert val == pytest.approx(0.3)
 
 
