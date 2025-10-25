@@ -1,33 +1,37 @@
+import warnings
+from copy import deepcopy
+from typing import Mapping, Sequence
+
 import matplotlib.pyplot as plt
 from matplotlib import ticker
-from copy import deepcopy
 import pandas as pd
-import warnings
 
 from .utils import get_best_epoch_value
 
 
-def _get_n_epochs(history):
+def _get_n_epochs(history: Mapping) -> int:
+    """Return number of epochs (length of value lists) for a history dict.
+
+    Raises TypeError if not all values have the same length.
+    """
     n_epochs = set(map(len, history.values()))
     if len(n_epochs) != 1:
         raise TypeError(
-            "The values of all `history` keys should be lists of the same"
-            " length, equaled to the number of epochs."
+            "The values of all `history` keys should be lists of the same "
+            "length, equal to the number of epochs."
         )
     return list(n_epochs)[0]
 
 
-def _get_train_metric_names(keys):
-    train_keys = []
+def _get_train_key_names(keys: Sequence[str]) -> list[str]:
+    """Normalize key names by stripping leading 'val_' and return unique names."""
+    train_keys: list[str] = []
     for key in keys:
-        if key.startswith("val_"):
-            train_keys.append(key[4:])
-        else:
-            train_keys.append(key)
+        train_keys.append(key[4:] if key.startswith("val_") else key)
     return list(set(train_keys))
 
 
-def _get_colors(num: int) -> tuple[tuple[float, float, float]]:
+def _get_colors(num: int) -> list[tuple[float, float, float]]:
     # https://matplotlib.org/stable/users/explain/colors/colormaps.html#qualitative
     cmap = plt.get_cmap("tab10").colors
     if num <= 10:
@@ -243,20 +247,20 @@ def lcurves_by_history(
         return dict(bottom=ylim_bottom - pad, top=ylim_top + pad)
 
     def get_plot_keys(plot_, _keys):
-        if type(plot_) is list:
-            if len(plot_) > 0:
-                keys = []
+        if isinstance(plot_, (list, tuple)):
+            if plot_:
+                keys: list[str] = []
                 for hist in histories:
                     for key_name in plot_:
-                        if key_name in hist.keys():
+                        if key_name in hist:
                             keys.append(key_name)
                     keys += [
                         "val_" + key_name
                         for key_name in plot_
-                        if "val_" + key_name in hist.keys()
+                        if "val_" + key_name in hist
                     ]
-                return sorted(list(set(keys)))
-        elif plot_:
+                return sorted(set(keys))
+        if plot_:
             return sorted(_keys)
         return []
 
@@ -264,31 +268,29 @@ def lcurves_by_history(
 
     if not isinstance(histories, (list, dict)):
         raise TypeError(
-            "The `histories` parameter should be a dictionary or a list of"
-            " dictionaries."
+            "The `histories` parameter should be a dict or a list of dicts."
         )
-    if len(histories) == 0:
+    if not histories:
         raise ValueError("The `histories` list or dictionary cannot be empty.")
     if isinstance(histories, list):
         for i, hist in enumerate(histories):
-            if not type(hist) is dict:
+            if not isinstance(hist, dict):
                 raise TypeError(
-                    f"The {i}-th element of the `histories` list is not a"
-                    " dictionary."
+                    f"The {i}-th element of the `histories` list is not a dict."
                 )
-            if len(hist) == 0:
+            if not hist:
                 raise ValueError(
                     f"The {i}-th dictionary in the `histories` list cannot be"
                     " empty."
                 )
-    if type(histories) is dict:
+    if isinstance(histories, dict):
         histories = [histories]
     n_epochs = [_get_n_epochs(hist) for hist in histories]
     n_epochs_max = max(n_epochs)
 
     if epoch_range_to_scale is None:
         epochs_slice = slice(0, n_epochs_max)
-    elif type(epoch_range_to_scale) is int:
+    elif isinstance(epoch_range_to_scale, int):
         epochs_slice = slice(
             max(0, epoch_range_to_scale - initial_epoch), n_epochs_max
         )
@@ -313,19 +315,19 @@ def lcurves_by_history(
         )
     else:
         raise TypeError(
-            "The `epoch_range_to_scale` parameter should be an int value or a"
-            " list (tuple) of two int values."
+            "The `epoch_range_to_scale` parameter should be an int or a"
+            " list/tuple of two ints."
         )
 
-    if type(plot_losses) not in [bool, list, tuple]:
+    if not isinstance(plot_losses, (bool, list, tuple)):
         raise TypeError(
             "The `plot_losses` parameter should be bool, list or tuple"
         )
-    if type(plot_metrics) not in [bool, list, tuple]:
+    if not isinstance(plot_metrics, (bool, list, tuple)):
         raise TypeError(
             "The `plot_metrics` parameter should be bool, list or tuple"
         )
-    if type(plot_learning_rate) not in [bool, list, tuple]:
+    if not isinstance(plot_learning_rate, (bool, list, tuple)):
         raise TypeError(
             "The `plot_learning_rate` parameter should be bool, list or tuple"
         )
@@ -333,19 +335,18 @@ def lcurves_by_history(
     if optimization_modes is not None:
         if not isinstance(optimization_modes, dict):
             raise TypeError(
-                "The `optimization_modes` parameter should be a dictionary or"
-                " None."
+                "The `optimization_modes` parameter should be a dict or None."
             )
         for lr_name, value in optimization_modes.items():
-            if not isinstance(lr_name, str) or len(lr_name) == 0:
+            if not isinstance(lr_name, str) or not lr_name:
                 raise TypeError(
-                    "The keys of the `optimization_modes` dictionary should be"
+                    "The keys of the `optimization_modes` dict should be"
                     " non-empty strings."
                 )
             if value not in ("min", "max"):
                 raise ValueError(
-                    "The values of the `optimization_modes` dictionary should"
-                    " be 'min' or 'max'."
+                    "The values of the `optimization_modes` dict should be"
+                    " 'min' or 'max'."
                 )
     if not isinstance(initial_epoch, int) or initial_epoch < 0:
         raise ValueError(
@@ -359,23 +360,23 @@ def lcurves_by_history(
             )
         if len(model_names) != len(histories):
             raise ValueError(
-                "The length of the `model_names` list should be equal to"
-                " the length of the `histories` list."
+                "The length of `model_names` must equal the length of"
+                " `histories`."
             )
         for name in model_names:
             if not isinstance(name, str):
                 raise TypeError(
-                    "The elements of the `model_names` list should be strings."
+                    "Each element of `model_names` must be a string."
                 )
     elif len(histories) > 1:
-        model_names = list(str(i) for i in range(len(histories)))
+        model_names = [str(i) for i in range(len(histories))]
     else:
         model_names = [""]
 
     if color_grouping_by not in ("model", "metric", None):
         raise ValueError(
-            "The `color_grouping_by` parameter should be 'model',"
-            " 'metric', or None."
+            "The `color_grouping_by` parameter should be 'model', 'metric', or"
+            " None."
         )
     # End of input data validation
 
@@ -419,9 +420,9 @@ def lcurves_by_history(
             break
 
     # determine colors of curves in the subplots of losses, metrics and learning rates
-    train_loss_names = _get_train_metric_names(plot_loss_keys)
-    train_metric_names = _get_train_metric_names(plot_metric_keys)
-    lr_names = _get_train_metric_names(plot_lr_keys)
+    train_loss_names = _get_train_key_names(plot_loss_keys)
+    train_metric_names = _get_train_key_names(plot_metric_keys)
+    lr_names = _get_train_key_names(plot_lr_keys)
 
     if len(model_names) < 2 and color_grouping_by == "model":
         color_grouping_by = None

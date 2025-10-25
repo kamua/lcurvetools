@@ -1,5 +1,3 @@
-import warnings
-
 import pytest
 
 from lcurvetools.utils import get_mode_by_metric_name, get_best_epoch_value
