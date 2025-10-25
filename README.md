@@ -1,4 +1,4 @@
-# lcurvetools
+# LCurveTools
 
 Simple Python tools for plotting learning curves of neural network models trained with the keras or scikit-learn framework in a single figure in an easy-to-understand format.
 
