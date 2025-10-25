@@ -51,8 +51,9 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
     ],
-    install_requires=["numpy", "matplotlib"],
-    packages=find_packages(exclude=("*_test.py",)),
+    python_requires=">=3.10",
+    install_requires=["numpy", "matplotlib", "scikit-learn"],
+    packages=find_packages(exclude=("test_*.py",)),
     keywords=[
         "learning curve",
         "keras history",
