@@ -5,6 +5,7 @@ from typing import Mapping, Sequence
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
+from more_itertools import last
 import pandas as pd
 
 from .utils import get_best_epoch_value
@@ -734,17 +735,24 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
         )
     prev_epochs = list(prev_epochs)[0]
 
-    if len(set(map(len, last_history.values()))) != 1:
+    last_epochs = set(map(len, last_history.values()))
+    if len(last_epochs) != 1:
         raise ValueError(
             "The values of all `last_history` keys should be lists of the same"
             " length, equaled  to the number of epochs."
         )
+    last_epochs = list(last_epochs)[0]
 
     full_history = deepcopy(prev_history)
-    for key in last_history.keys():
-        if key in prev_history.keys():
+
+    for key in prev_history:
+        if key in last_history:
             full_history[key] += last_history[key]
         else:
+            full_history[key] += [None] * last_epochs
+
+    for key in last_history:
+        if key not in full_history:
             full_history[key] = [None] * prev_epochs + last_history[key]
 
     return full_history

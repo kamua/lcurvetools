@@ -1,6 +1,6 @@
 """Test configuration for lcurvetools."""
 
-import os
+from sklearn.neural_network import MLPClassifier
 import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend
@@ -44,7 +44,7 @@ def multi_model_histories():
 def mock_mlp_estimator():
     """Mock MLPClassifier with loss curve and validation scores."""
 
-    class MockMLPEstimator:
+    class MockMLPEstimator(MLPClassifier):
         def __init__(self):
             self.loss_curve_ = [0.5, 0.3, 0.2, 0.15]
             self.validation_scores_ = [0.7, 0.8, 0.85, 0.9]
