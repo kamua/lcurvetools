@@ -25,3 +25,10 @@ profile = "black"
 force_single_line = "True"
 line_length = 80
 extend_skip_glob=["examples/*", "guides/*"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
