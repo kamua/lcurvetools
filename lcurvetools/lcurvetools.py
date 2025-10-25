@@ -5,7 +5,6 @@ from typing import Mapping, Sequence
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
-from more_itertools import last
 import pandas as pd
 
 from .utils import get_best_epoch_value
