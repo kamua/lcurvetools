@@ -1,3 +1,4 @@
+from typing import Literal
 import warnings
 from copy import deepcopy
 from typing import Mapping, Sequence
@@ -77,8 +78,8 @@ def lcurves_by_history(
     plot_metrics: bool | list[str] = True,
     plot_learning_rate: bool | list[str] = True,
     color_grouping_by: str | None = None,
-    model_names: list[str] = None,
-    optimization_modes: dict[str, str] | None = None,
+    model_names: list[str] | None = None,
+    optimization_modes: dict[str, Literal["auto", "min", "max"]] | None = None,
     figsize: tuple[float, float] | None = None,
 ):
     """
@@ -757,7 +758,7 @@ def lcurves_by_MLP_estimator(
     plot_val_scores: bool = True,
     on_separate_subplots: bool = False,
     figsize: tuple[float, float] | None = None,
-) -> list[object]:
+) -> list[object] | None:
     """
     Plot learning curves of the MLP estimator ([MLPClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html)
     or [MLPRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html))
@@ -886,7 +887,7 @@ def lcurves_by_MLP_estimator(
                 "In addition, `plot_losses = False `, so no dependences are"
                 " plotted."
             )
-            return
+            return None
         plot_val_scores = False
 
     on_separate_subplots = (
