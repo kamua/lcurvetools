@@ -1,15 +1,43 @@
 import os
-from setuptools import setup
-from setuptools import find_packages
+from setuptools import setup, find_packages
 
 
-def read(rel_path):
+def read(rel_path: str) -> str:
+    """Read a file relative to the setup.py location.
+
+    Parameters
+    ----------
+    rel_path : str
+        Relative path to the file from setup.py location.
+
+    Returns
+    -------
+    str
+        The contents of the file as a string.
+    """
     here = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(here, rel_path)) as fp:
+    with open(os.path.join(here, rel_path), encoding="utf-8") as fp:
         return fp.read()
 
 
-def get_version(rel_path):
+def get_version(rel_path: str) -> str:
+    """Extract version string from a Python file.
+
+    Parameters
+    ----------
+    rel_path : str
+        Relative path to the Python file containing version info.
+
+    Returns
+    -------
+    str
+        The version string.
+
+    Raises
+    ------
+    RuntimeError
+        If version string cannot be found.
+    """
     for line in read(rel_path).splitlines():
         if line.startswith("__version__"):
             delim = '"' if '"' in line else "'"
@@ -17,10 +45,13 @@ def get_version(rel_path):
     raise RuntimeError("Unable to find version string.")
 
 
-if os.path.exists("lcurvetools/version.py"):
-    VERSION = get_version("lcurvetools/version.py")
-else:
-    VERSION = get_version("lcurvetools/__init__.py")
+# Determine version from either version.py or __init__.py
+version_file = (
+    "lcurvetools/version.py"
+    if os.path.exists("lcurvetools/version.py")
+    else "lcurvetools/__init__.py"
+)
+VERSION = get_version(version_file)
 
 setup(
     name="lcurvetools",
@@ -32,9 +63,7 @@ setup(
     author="Andriy Konovalov",
     author_email="kandriy74@gmail.com",
     license="BSD 3-Clause License",
-    long_description=open("README.md").read()
-    + "\n\n"
-    + open("CHANGELOG.md").read(),
+    long_description=read("README.md") + "\n\n" + read("CHANGELOG.md"),
     long_description_content_type="text/markdown",
     url="https://github.com/kamua/lcurvetools",
     include_package_data=True,
@@ -53,7 +82,7 @@ setup(
     ],
     python_requires=">=3.10",
     install_requires=["numpy", "matplotlib", "scikit-learn"],
-    packages=find_packages(exclude=("test_*.py",)),
+    packages=find_packages(exclude=("tests*", "test_*", "demo_notebooks*")),
     keywords=[
         "learning curve",
         "keras history",
