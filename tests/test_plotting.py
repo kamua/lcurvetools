@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from lcurvetools import (
-    lcurves_by_history,
+    lcurves,
     lcurves_by_MLP_estimator,
     history_concatenate,
 )
@@ -11,7 +11,7 @@ from lcurvetools import (
 
 def test_lcurves_by_history_basic(simple_history):
     """Test basic learning curve plotting with a single history."""
-    axes = lcurves_by_history(simple_history)
+    axes = lcurves(simple_history)
     assert len(axes) == 3  # Loss, metrics and lr axes
     plt.close()
 
@@ -19,7 +19,7 @@ def test_lcurves_by_history_basic(simple_history):
 def test_lcurves_by_history_metrics(simple_history):
     """Test learning curve plotting with specific metrics."""
     metrics = ["accuracy"]
-    axes = lcurves_by_history(simple_history, plot_metrics=metrics)
+    axes = lcurves(simple_history, plot_metrics=metrics)
     assert len(axes) == 3  # Loss, single metric and lr axes
     plt.close()
 
@@ -30,14 +30,14 @@ def test_lcurves_by_history_no_validation(simple_history):
         "loss": simple_history["loss"],
         "accuracy": simple_history["accuracy"],
     }
-    axes = lcurves_by_history(history)
+    axes = lcurves(history)
     assert len(axes) == 2
     plt.close()
 
 
 def test_lcurves_by_history_with_lr(simple_history):
     """Test learning curve plotting with learning rate."""
-    axes = lcurves_by_history(simple_history, plot_learning_rate=True)
+    axes = lcurves(simple_history, plot_learning_rate=True)
     assert len(axes) == 3  # Loss, metrics, and lr axes
     plt.close()
 

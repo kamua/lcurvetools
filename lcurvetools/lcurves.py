@@ -1,76 +1,19 @@
 from typing import Literal
 import warnings
-from copy import deepcopy
-from typing import Mapping, Sequence
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 import pandas as pd
 
-from .utils import get_best_epoch_value
+from .utils import (
+    get_best_epoch_value,
+    _get_n_epochs,
+    _get_basic_key_names,
+    _get_distinct_colors,
+)
 
 
-def _get_n_epochs(history: Mapping) -> int:
-    """Return number of epochs (length of value lists) for a history dict.
-
-    Raises TypeError if not all values have the same length.
-    """
-    n_epochs = set(map(len, history.values()))
-    if len(n_epochs) != 1:
-        raise TypeError(
-            "The values of all `history` keys should be lists of the same "
-            "length, equal to the number of epochs."
-        )
-    return list(n_epochs)[0]
-
-
-def _get_train_key_names(keys: Sequence[str]) -> list[str]:
-    """Normalize key names by stripping leading 'val_' and return unique names."""
-    train_keys: list[str] = []
-    for key in keys:
-        train_keys.append(key[4:] if key.startswith("val_") else key)
-    return list(set(train_keys))
-
-
-def _get_colors(num: int) -> list[tuple[float, float, float]]:
-    # https://matplotlib.org/stable/users/explain/colors/colormaps.html#qualitative
-    cmap = plt.get_cmap("tab10").colors
-    if num <= 10:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20b").colors[::4]
-    if num <= 15:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20c").colors[1::4]
-    if num <= 20:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20b").colors[2::4]
-    if num <= 25:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20").colors[1::2]
-    if num <= 35:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20b").colors[1::4]
-    if num <= 40:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20c").colors[2::4]
-    if num <= 45:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20b").colors[3::4]
-    if num <= 50:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20c").colors[::4]
-    if num <= 55:
-        return cmap[:num]
-    cmap += plt.get_cmap("tab20c").colors[3::4]
-    if num <= 60:
-        return cmap[:num]
-
-    while len(cmap) < num:
-        cmap += cmap
-    return cmap[:num]
-
-
-def lcurves_by_history(
+def lcurves(
     histories: dict | list[dict],
     initial_epoch: int = 0,
     epoch_range_to_scale: int | list[int] | tuple[int, int] = 0,
@@ -421,9 +364,9 @@ def lcurves_by_history(
             break
 
     # determine colors of curves in the subplots of losses, metrics and learning rates
-    train_loss_names = _get_train_key_names(plot_loss_keys)
-    train_metric_names = _get_train_key_names(plot_metric_keys)
-    lr_names = _get_train_key_names(plot_lr_keys)
+    train_loss_names = _get_basic_key_names(plot_loss_keys)
+    train_metric_names = _get_basic_key_names(plot_metric_keys)
+    lr_names = _get_basic_key_names(plot_lr_keys)
 
     if len(model_names) < 2 and color_grouping_by == "model":
         color_grouping_by = None
@@ -465,24 +408,24 @@ def lcurves_by_history(
         lr_clrs = pd.Series(index=index, dtype="object")
 
         if color_grouping_by is None:
-            cmap = _get_colors(
+            cmap = _get_distinct_colors(
                 max(len(loss_clrs), len(metric_clrs), len(lr_clrs))
             )
             loss_clrs.iloc[:] = cmap[: len(loss_clrs)]
             metric_clrs.iloc[:] = cmap[: len(metric_clrs)]
             lr_clrs.iloc[:] = cmap[: len(lr_clrs)]
         elif color_grouping_by == "metric":
-            cmap = _get_colors(len(train_loss_names))
+            cmap = _get_distinct_colors(len(train_loss_names))
             for model in model_names:
                 loss_clrs.loc[:, model] = cmap
-            cmap = _get_colors(len(train_metric_names))
+            cmap = _get_distinct_colors(len(train_metric_names))
             for model in model_names:
                 metric_clrs.loc[:, model] = cmap
-            cmap = _get_colors(len(lr_names))
+            cmap = _get_distinct_colors(len(lr_names))
             for model in model_names:
                 lr_clrs.loc[:, model] = cmap
         else:  # color_grouping_by == "model":
-            cmap = _get_colors(len(model_names))
+            cmap = _get_distinct_colors(len(model_names))
             for loss_name in train_loss_names:
                 loss_clrs.loc[loss_name] = cmap
             for lr_name in train_metric_names:
@@ -672,89 +615,8 @@ def lcurves_by_history(
     return axs
 
 
-def history_concatenate(prev_history: dict, last_history: dict) -> dict:
-    """
-    Concatenate two dictionaries in the format of the `history` attribute of
-    the `History` object which is returned by the [fit](https://keras.io/api/models/model_training_apis/#fit-method)
-    method of the model.
-
-    Useful for combining histories of model fitting with two or more consecutive
-    runs into a single history to plot full learning curves.
-
-    Parameters
-    ----------
-    prev_history : dict
-        History of the previous run of model fitting. The values of all keys
-        must be lists of the same length.
-    last_history : dict
-        History of the last run of model fitting. The values of all keys
-        must be lists of the same length.
-
-    Returns
-    -------
-    dict
-        Dictionary with combined histories.
-
-    Examples
-    --------
-    >>> import keras
-    >>> from lcurvetools import history_concatenate, lcurves_by_history
-
-    [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
-    and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
-    >>> model = keras.Model(...) # or keras.Sequential(...)
-    >>> model.compile(...)
-    >>> hist1 = model.fit(...)
-
-    Compile as needed and fit using possibly other parameter values:
-    >>> model.compile(...)
-    >>> hist2 = model.fit(...)
-
-    Concatenate the `.history` dictionaries into one:
-    >>> full_history = history_concatenate(hist1.history, hist2.history)
-
-    Use `full_history` dictionary to plot full learning curves:
-    >>> lcurves_by_history(full_history);
-    """
-    if not type(prev_history) is dict:
-        raise TypeError("The `prev_history` parameter should be a dictionary.")
-    if not type(last_history) is dict:
-        raise TypeError("The `last_history` parameter should be a dictionary.")
-
-    if len(prev_history) < 1:
-        return last_history
-    if len(last_history) < 1:
-        return prev_history
-
-    prev_epochs = set(map(len, prev_history.values()))
-    if len(prev_epochs) != 1:
-        raise ValueError(
-            "The values of all `prev_history` keys should be lists of the same"
-            " length, equaled  to the number of epochs."
-        )
-    prev_epochs = list(prev_epochs)[0]
-
-    last_epochs = set(map(len, last_history.values()))
-    if len(last_epochs) != 1:
-        raise ValueError(
-            "The values of all `last_history` keys should be lists of the same"
-            " length, equaled  to the number of epochs."
-        )
-    last_epochs = list(last_epochs)[0]
-
-    full_history = deepcopy(prev_history)
-
-    for key in prev_history:
-        if key in last_history:
-            full_history[key] += last_history[key]
-        else:
-            full_history[key] += [None] * last_epochs
-
-    for key in last_history:
-        if key not in full_history:
-            full_history[key] = [None] * prev_epochs + last_history[key]
-
-    return full_history
+# Alias for backward compatibility
+lcurves_by_history = lcurves
 
 
 def lcurves_by_MLP_estimator(
@@ -901,7 +763,7 @@ def lcurves_by_MLP_estimator(
         on_separate_subplots and plot_losses and plot_val_scores
     )
     if on_separate_subplots:
-        axs = lcurves_by_history(
+        axs = lcurves(
             {
                 "loss": MLP_estimator.loss_curve_,
                 "validation score": MLP_estimator.validation_scores_,
