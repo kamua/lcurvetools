@@ -2,14 +2,14 @@
 
 Simple Python tools for plotting learning curves of neural network models trained with the keras or scikit-learn framework in a single figure in an easy-to-understand format.
 
-Currently the `lcurvetools` package provides three functions: `lcurves_by_history`, `history_concatenate` and `lcurves_by_MLP_estimator`.
+Currently the `lcurvetools` package provides three basic functions: `lcurves`, `history_concatenate` and `lcurves_by_MLP_estimator`.
 
-**NOTE:** All of the plotting examples below are for [interactive Python mode](https://matplotlib.org/stable/users/explain/figure/interactive.html#interactive-mode) in Jupyter-like environments. If you are in non-interactive mode you may need to explicitly call [`plt.show()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.show.html) after calling the `lcurves_by_history` or `lcurves_by_MLP_estimator` function to display the window with built plots on your screen.
+**NOTE:** All of the plotting examples below are for [interactive Python mode](https://matplotlib.org/stable/users/explain/figure/interactive.html#interactive-mode) in Jupyter-like environments. If you are in non-interactive mode you may need to explicitly call [`plt.show()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.show.html) after calling the `lcurves` or `lcurves_by_MLP_estimator` function to display the window with built plots on your screen.
 
 ## Table of contents
 
 - [Installation](#installation)
-- [The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object](#the-lcurves_by_history-function-to-plot-learning-curves-by-the-history-attribute-of-the-keras-history-object)
+- [The `lcurves` function to plot learning curves by the `history` attribute of the keras `History` object](#the-lcurves-function-to-plot-learning-curves-by-the-history-attribute-of-the-keras-history-object)
   - [Usage scheme](#usage-scheme)
     - [Plotting learning curves of one model based on one dictionary](#plotting-learning-curves-of-one-model-based-on-one-dictionary)
     - [Plotting learning curves based on a list of dictionaries with fitting histories of several models](#plotting-learning-curves-based-on-a-list-of-dictionaries-with-fitting-histories-of-several-models)
@@ -37,17 +37,17 @@ To update a previously installed package to the latest version, use the command:
 pip install lcurvetools --upgrade
 ```
 
-## The `lcurves_by_history` function to plot learning curves by the `history` attribute of the keras `History` object
+## The `lcurves` function to plot learning curves by the `history` attribute of the keras `History` object
 
-Neural network model training with keras is performed using the [fit](https://keras.io/api/models/model_training_apis/#fit-method) method. The method returns the `History` object with the `history` attribute which is dictionary and contains keys with training and validation values of losses and metrics, as well as learning rate values at successive epochs. The `lcurves_by_history` function uses the `History.history` dictionary to plot the learning curves as the dependences of the above values on the epoch index.
+Neural network model training with keras is performed using the [fit](https://keras.io/api/models/model_training_apis/#fit-method) method. The method returns the `History` object with the `history` attribute which is dictionary and contains keys with training and validation values of losses and metrics, as well as learning rate values at successive epochs. The `lcurves` function and its alias `lcurves_by_history` use the `History.history` dictionary to plot the learning curves as the dependences of the above values on the epoch index.
 
 ### Usage scheme
 
-Import the `keras` module and the `lcurves_by_history` function:
+Import the `keras` module and the `lcurves` function:
 
 ```python
 import keras
-from lcurvetools import lcurves_by_history
+from lcurvetools import lcurves
 ```
 
 #### Plotting learning curves of one model based on one dictionary
@@ -64,7 +64,7 @@ and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras
 2. Use `hist.history` dictionary to plot the learning curves as the dependences of values of all keys in the dictionary on an epoch index with automatic recognition of keys of losses, metrics and learning rate:
 
    ```python
-   lcurves_by_history(hist.history);
+   lcurves(hist.history);
    ```
 
 #### Plotting learning curves based on a list of dictionaries with fitting histories of several models
@@ -87,7 +87,7 @@ and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the sever
 2. Use a list of dictionaries `[hist_1.history, hist_2.history, ...]` to plot all learning curves of all models in a single figure:
 
    ```python
-   lcurves_by_history([hist_1.history, hist_2.history, ...]);
+   lcurves([hist_1.history, hist_2.history, ...]);
    ```
 
 #### Plotting learning curves based on a list of dictionaries with independent refitting histories of one model
@@ -106,7 +106,7 @@ and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the sever
 2. Use the `histories` dictionary list to plot all learning curves of the model in a single figure:
 
    ```python
-   lcurves_by_history(histories);
+   lcurves(histories);
    ```
 
 **Note:** The ability to plot all of a model's learning curves in a single figure is useful for k-fold cross-validation analysis.
@@ -118,7 +118,7 @@ The appearance of the output figure depends on the list of keys in the `hist.his
 ```python
 model.compile(loss="categorical_crossentropy", metrics=["accuracy"])
 hist = model.fit(x_train, y_train, validation_split=0.1, epochs=50)
-lcurves_by_history(hist.history);
+lcurves(hist.history);
 ```
 
 ![typical plot of learning curves](img/typical_plot.png)
@@ -133,14 +133,14 @@ Usage of callbacks for the `fit` method can add new keys to the `hist.history` d
 hist = model.fit(x_train, y_train, validation_split=0.1, epochs=50,
     callbacks=keras.callbacks.ReduceLROnPlateau(),
 )
-lcurves_by_history(hist.history);
+lcurves(hist.history);
 ```
 
 ![figure with learning rate subplot](img/learning_rate_subplot.png)
 
 ### Customizing appearance of the output figure
 
-The `lcurves_by_history` function has optional parameters to customize the appearance of the output figure. For example, the `epoch_range_to_scale` option allows to specify the epoch index range within which the subplots of the losses and metrics are scaled.
+The `lcurves` function has optional parameters to customize the appearance of the output figure. For example, the `epoch_range_to_scale` option allows to specify the epoch index range within which the subplots of the losses and metrics are scaled.
 
 - If `epoch_range_to_scale` is a list or a tuple of two int values, then they specify the epoch index limits of the scaling range in the form `[start, stop)`, i.e. as for `slice` and `range` objects.
 - If `epoch_range_to_scale` is an int value, then it specifies the lower epoch index `start` of the scaling range, and the losses and metrics subplots are scaled by epochs with indices from `start` to the last.
@@ -148,17 +148,17 @@ The `lcurves_by_history` function has optional parameters to customize the appea
 So, you can exclude the first 5 epochs from the scaling range as follows:
 
 ```python
-lcurves_by_history(hist.history, epoch_range_to_scale=5);
+lcurves(hist.history, epoch_range_to_scale=5);
 ```
 
 ![figure with custom scaling](img/custom_scaling.png)
 
-For a description of other optional parameters of the `lcurves_by_history` function to customize the appearance of the output figure, see its docstring.
+For a description of other optional parameters of the `lcurves` function to customize the appearance of the output figure, see its docstring.
 
-The `lcurves_by_history` function returns a numpy array or a list of the [`matplotlib.axes.Axes`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html) objects corresponded to the built subplots from top to bottom. So, you can use the methods of these objects to customize the appearance of the output figure.
+The `lcurves` function returns a numpy array or a list of the [`matplotlib.axes.Axes`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html) objects corresponded to the built subplots from top to bottom. So, you can use the methods of these objects to customize the appearance of the output figure.
 
 ```python
-axs = lcurves_by_history(history, initial_epoch=1, epoch_range_to_scale=6)
+axs = lcurves(history, initial_epoch=1, epoch_range_to_scale=6)
 axs[0].tick_params(axis="x", labeltop=True)
 axs[-1].set_xlabel('number of passed epochs')
 axs[-1].legend().remove()
@@ -176,7 +176,7 @@ This function is useful for combining histories of a model fitting with two or m
 
 ```python
 import keras
-from lcurvetools import history_concatenate, lcurves_by_history
+from lcurvetools import history_concatenate, lcurves
 ```
 
 - [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
@@ -204,12 +204,12 @@ full_history = history_concatenate(hist1.history, hist2.history)
 - Use `full_history` dictionary to plot full learning curves:
 
 ```python
-lcurves_by_history(full_history);
+lcurves(full_history);
 ```
 
 ## The `lcurves_by_MLP_estimator` function to plot learning curves of the scikit-learn MLP estimator
 
-The scikit-learn library provides 2 classes for building multi-layer perceptron (MLP) models of classification and regression: [`MLPClassifier`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html) and [`MLPRegressor`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html). After creation and fitting of these MLP estimators with using `early_stopping=True` the `MLPClassifier` and `MLPRegressor` objects have the `loss_curve_` and `validation_scores_` attributes with train loss and validation score values at successive epochs. The `lcurves_by_history` function uses the `loss_curve_` and `validation_scores_` attributes to plot the learning curves as the dependences of the above values on the epoch index.
+The scikit-learn library provides 2 classes for building multi-layer perceptron (MLP) models of classification and regression: [`MLPClassifier`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html) and [`MLPRegressor`](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html). After creation and fitting of these MLP estimators with using `early_stopping=True` the `MLPClassifier` and `MLPRegressor` objects have the `loss_curve_` and `validation_scores_` attributes with train loss and validation score values at successive epochs. The `lcurves_by_MLP_estimator` function uses the `loss_curve_` and `validation_scores_` attributes to plot the learning curves as the dependences of the above values on the epoch index.
 
 ### Usage scheme
 

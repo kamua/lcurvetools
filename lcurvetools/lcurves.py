@@ -148,7 +148,7 @@ def lcurves(
     Examples
     --------
     >>> import keras
-    >>> from lcurvetools import lcurves_by_history
+    >>> from lcurvetools import lcurves
 
     [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
     and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
@@ -162,7 +162,7 @@ def lcurves(
     index with automatic recognition of keys of losses, metrics and
     learning rate:
 
-    >>> lcurves_by_history(hist.history);
+    >>> lcurves(hist.history);
 
     If the model is fitted multiple times, then all the fitting histories
     can be plotted in a single figure.
@@ -173,7 +173,7 @@ def lcurves(
     >>>     model.compile(...)
     >>>     hist = model.fit(...)
     >>>     histories.append(hist.history)
-    >>> lcurves_by_history(histories);
+    >>> lcurves(histories);
     """
 
     def get_ylims(keys):
