@@ -10,16 +10,18 @@ Currently the `lcurvetools` package provides three basic functions: `lcurves`, `
 
 - [Installation](#installation)
 - [The `lcurves` function to plot learning curves by the `history` attribute of the keras `History` object](#the-lcurves-function-to-plot-learning-curves-by-the-history-attribute-of-the-keras-history-object)
-  - [Usage scheme](#usage-scheme)
-    - [Plotting learning curves of one model based on one dictionary](#plotting-learning-curves-of-one-model-based-on-one-dictionary)
-    - [Plotting learning curves based on a list of dictionaries with fitting histories of several models](#plotting-learning-curves-based-on-a-list-of-dictionaries-with-fitting-histories-of-several-models)
-    - [Plotting learning curves based on a list of dictionaries with independent refitting histories of one model](#plotting-learning-curves-based-on-a-list-of-dictionaries-with-independent-refitting-histories-of-one-model)
-  - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure)
-  - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure)
+  - [Plotting learning curves of one model based on one dictionary](#plotting-learning-curves-of-one-model-based-on-one-dictionary)
+    - [Usage scheme](#usage-scheme)
+    - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure)
+    - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure)
+  - [Plotting learning curves based on a list of dictionaries with fitting histories of several models](#plotting-learning-curves-based-on-a-list-of-dictionaries-with-fitting-histories-of-several-models)
+    - [Usage scheme](#usage-scheme-1)
+  - [Plotting learning curves based on a list of dictionaries with independent refitting histories of one model](#plotting-learning-curves-based-on-a-list-of-dictionaries-with-independent-refitting-histories-of-one-model)
+    - [Usage scheme](#usage-scheme-2)
 - [The `history_concatenate` function to concatenate two `History.history` dictionaries](#the-history_concatenate-function-to-concatenate-two-historyhistory-dictionaries)
-  - [Usage scheme](#usage-scheme-1)
+  - [Usage scheme](#usage-scheme-3)
 - [The `lcurves_by_MLP_estimator` function to plot learning curves of the scikit-learn MLP estimator](#the-lcurves_by_mlp_estimator-function-to-plot-learning-curves-of-the-scikit-learn-mlp-estimator)
-  - [Usage scheme](#usage-scheme-2)
+  - [Usage scheme](#usage-scheme-4)
   - [Typical appearance of the output figure](#typical-appearance-of-the-output-figure-1)
   - [Customizing appearance of the output figure](#customizing-appearance-of-the-output-figure-1)
 
@@ -41,8 +43,6 @@ pip install lcurvetools --upgrade
 
 Neural network model training with keras is performed using the [fit](https://keras.io/api/models/model_training_apis/#fit-method) method. The method returns the `History` object with the `history` attribute which is dictionary and contains keys with training and validation values of losses and metrics, as well as learning rate values at successive epochs. The `lcurves` function and its alias `lcurves_by_history` use the `History.history` dictionary to plot the learning curves as the dependences of the above values on the epoch index.
 
-### Usage scheme
-
 Import the `keras` module and the `lcurves` function:
 
 ```python
@@ -50,7 +50,9 @@ import keras
 from lcurvetools import lcurves
 ```
 
-#### Plotting learning curves of one model based on one dictionary
+### Plotting learning curves of one model based on one dictionary
+
+#### Usage scheme
 
 1. [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
 and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
@@ -67,51 +69,7 @@ and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras
    lcurves(hist.history);
    ```
 
-#### Plotting learning curves based on a list of dictionaries with fitting histories of several models
-
-1. [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
-and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the several keras models:
-
-   ```python
-   model_1 = keras.Model(...) # or keras.Sequential(...)
-   model_1.compile(...)
-   hist_1 = model.fit(...)
-
-   model_2 = keras.Model(...) # or keras.Sequential(...)
-   model_2.compile(...)
-   hist_2 = model.fit(...)
-
-   <...>
-   ```
-
-2. Use a list of dictionaries `[hist_1.history, hist_2.history, ...]` to plot all learning curves of all models in a single figure:
-
-   ```python
-   lcurves([hist_1.history, hist_2.history, ...]);
-   ```
-
-#### Plotting learning curves based on a list of dictionaries with independent refitting histories of one model
-
-1. Organize a loop of multiple independent retraining of the model and create a list of dictionaries with fitting histories:
-
-   ```python
-   histories = []
-   for i in range(5):
-       model = keras.Model(...) # or keras.Sequential(...)
-       model.compile(...)
-       hist = model.fit(...)
-       histories.append(hist.history)
-   ```
-
-2. Use the `histories` dictionary list to plot all learning curves of the model in a single figure:
-
-   ```python
-   lcurves(histories);
-   ```
-
-**Note:** The ability to plot all of a model's learning curves in a single figure is useful for k-fold cross-validation analysis.
-
-### Typical appearance of the output figure
+#### Typical appearance of the output figure
 
 The appearance of the output figure depends on the list of keys in the `hist.history` dictionary, which is determined by the parameters of the `compile` and `fit` methods of the model. For example, for a typical usage of these methods, the list of keys would be `['loss', 'accuracy', 'val_loss', 'val_accuracy']` and the output figure will contain 2 subplots with loss and metrics vertical axes and might look like this:
 
@@ -131,14 +89,14 @@ Usage of callbacks for the `fit` method can add new keys to the `hist.history` d
 
 ```python
 hist = model.fit(x_train, y_train, validation_split=0.1, epochs=50,
-    callbacks=keras.callbacks.ReduceLROnPlateau(),
+    callbacks=[keras.callbacks.ReduceLROnPlateau()],
 )
 lcurves(hist.history);
 ```
 
 ![figure with learning rate subplot](img/learning_rate_subplot.png)
 
-### Customizing appearance of the output figure
+#### Customizing appearance of the output figure
 
 The `lcurves` function has optional parameters to customize the appearance of the output figure. For example, the `epoch_range_to_scale` option allows to specify the epoch index range within which the subplots of the losses and metrics are scaled.
 
@@ -165,6 +123,54 @@ axs[-1].legend().remove()
 ```
 
 ![figure with adjusted axes](img/adjusted_axes.png)
+
+### Plotting learning curves based on a list of dictionaries with fitting histories of several models
+
+#### Usage scheme
+
+1. [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
+and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the several keras models:
+
+   ```python
+   model_1 = keras.Model(...) # or keras.Sequential(...)
+   model_1.compile(...)
+   hist_1 = model.fit(...)
+
+   model_2 = keras.Model(...) # or keras.Sequential(...)
+   model_2.compile(...)
+   hist_2 = model.fit(...)
+
+   <...>
+   ```
+
+2. Use a list of dictionaries `[hist_1.history, hist_2.history, ...]` to plot all learning curves of all models in a single figure:
+
+   ```python
+   lcurves([hist_1.history, hist_2.history, ...]);
+   ```
+
+### Plotting learning curves based on a list of dictionaries with independent refitting histories of one model
+
+#### Usage scheme
+
+1. Organize a loop of multiple independent retraining of the model and create a list of dictionaries with fitting histories:
+
+   ```python
+   histories = []
+   for i in range(5):
+       model = keras.Model(...) # or keras.Sequential(...)
+       model.compile(...)
+       hist = model.fit(...)
+       histories.append(hist.history)
+   ```
+
+2. Use the `histories` dictionary list to plot all learning curves of the model in a single figure:
+
+   ```python
+   lcurves(histories);
+   ```
+
+**Note:** The ability to plot all of a model's learning curves in a single figure is useful for k-fold cross-validation analysis.
 
 ## The `history_concatenate` function to concatenate two `History.history` dictionaries
 
