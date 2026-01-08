@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `utils` module with utility functions:
   - `get_mode_by_metric_name()`: Determines metric optimization mode
   - `get_best_epoch_value()`: Finds optimal epoch value
-  - `history_concatenate()`: Concatenates two Keras histories into one. The function has been moved to the `utils` module from the `lcurvetools` module and is also available for import from the main module of the `lcurvetools` package.
+  - `history_concatenate()`: Concatenates two Keras histories into one. The function was moved from the `lcurvetools` module to the `utils` module, but it remained available for import from the main `lcurvetools` package module.
 
 ## [1.0.1] - 2025-01-23
 

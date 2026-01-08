@@ -31,11 +31,16 @@ def _get_n_epochs(history: Mapping) -> int:
     return list(n_epochs)[0]
 
 
-def _get_basic_key_names(keys: Sequence[str]) -> list[str]:
-    """Normalize key names by stripping leading 'val_' and return unique (basic) names."""
+def _get_train_key_names(keys: Sequence[str]) -> list[str]:
+    """Return a list of unique train key names in the keras or YOLO style."""
     train_keys: list[str] = []
     for key in keys:
-        train_keys.append(key[4:] if key.startswith("val_") else key)
+        if key.startswith("val_"):  # keras style
+            train_keys.append(key[4:])
+        elif key.startswith("val/"):  # YOLO style
+            train_keys.append("train/" + key[4:])
+        else:
+            train_keys.append(key)
     return list(set(train_keys))
 
 
@@ -120,11 +125,11 @@ def get_mode_by_metric_name(name: str) -> OptimizationMode:
     if not isinstance(name, str) or not name:
         raise TypeError("name must be a non-empty string")
 
-    name = name.lower()
-    if name.startswith("val_"):
-        name = name[4:]
-
-    return "min" if any(kw in name for kw in MINIMIZATION_KEYWORDS) else "max"
+    return (
+        "min"
+        if any(kw in name.lower() for kw in MINIMIZATION_KEYWORDS)
+        else "max"
+    )
 
 
 def get_best_epoch_value(

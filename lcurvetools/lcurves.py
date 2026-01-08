@@ -8,7 +8,7 @@ import pandas as pd
 from .utils import (
     get_best_epoch_value,
     _get_n_epochs,
-    _get_basic_key_names,
+    _get_train_key_names,
     _get_distinct_colors,
 )
 
@@ -335,7 +335,7 @@ def lcurves(
         lr_keys += [
             name
             for name in hist.keys()
-            if "lr" == name or "learning_rate" in name
+            if "lr" == name or "lr/" == name[:3] or "learning_rate" in name
         ]
         metric_keys += [
             name for name in hist.keys() if name not in (loss_keys + lr_keys)
@@ -364,9 +364,9 @@ def lcurves(
             break
 
     # determine colors of curves in the subplots of losses, metrics and learning rates
-    train_loss_names = _get_basic_key_names(plot_loss_keys)
-    train_metric_names = _get_basic_key_names(plot_metric_keys)
-    lr_names = _get_basic_key_names(plot_lr_keys)
+    train_loss_names = _get_train_key_names(plot_loss_keys)
+    train_metric_names = _get_train_key_names(plot_metric_keys)
+    lr_names = _get_train_key_names(plot_lr_keys)
 
     if len(model_names) < 2 and color_grouping_by == "model":
         color_grouping_by = None
