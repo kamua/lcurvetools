@@ -499,7 +499,10 @@ def lcurves(
                     else loss_clrs[lr_name, model_names[i]]
                 )
                 for prefix in prefixes:
-                    _key = prefix + lr_name
+                    if prefix == "val/" and lr_name.startswith("train/"):
+                        _key = prefix + lr_name[6:]
+                    else:
+                        _key = prefix + lr_name
                     if _key in hist.keys():
                         _label = _key
                         if model_names[i] != "":
