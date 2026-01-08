@@ -340,7 +340,9 @@ def lcurves(
         lr_keys += [
             name
             for name in hist.keys()
-            if "lr" == name or "lr/" == name[:3] or "learning_rate" in name
+            if "lr" == name
+            or lr_name.startswith("lr/")
+            or "learning_rate" in name
         ]
         metric_keys += [
             name for name in hist.keys() if name not in (loss_keys + lr_keys)
@@ -364,7 +366,7 @@ def lcurves(
 
     val_key_exists = False
     for lr_name in plot_loss_keys + plot_metric_keys:
-        if lr_name[:4] == "val_":
+        if lr_name.startswith("val_") or lr_name.startswith("val/"):
             val_key_exists = True
             break
 
@@ -396,6 +398,9 @@ def lcurves(
         linestyles[prefixes[-1]] = (
             linestyles[prefixes[0]] if simple_color_grouping else (0, (2, 1))
         )
+        prefixes.append("val/")
+        linestyles[prefixes[-1]] = linestyles[prefixes[-2]]
+
     if not simple_color_grouping:
         index = pd.MultiIndex.from_product(
             [train_loss_names, model_names],
