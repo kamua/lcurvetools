@@ -340,9 +340,7 @@ def lcurves(
         lr_keys += [
             name
             for name in hist.keys()
-            if "lr" == name
-            or lr_name.startswith("lr/")
-            or "learning_rate" in name
+            if "lr" == name or name.startswith("lr/") or "learning_rate" in name
         ]
         metric_keys += [
             name for name in hist.keys() if name not in (loss_keys + lr_keys)
