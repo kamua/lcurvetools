@@ -203,6 +203,11 @@ def lcurves(
                         for key_name in plot_
                         if "val_" + key_name in hist
                     ]
+                    keys += [
+                        "val/" + key_name
+                        for key_name in plot_
+                        if "val/" + key_name in hist
+                    ]
                 return sorted(set(keys))
         if plot_:
             return sorted(_keys)
