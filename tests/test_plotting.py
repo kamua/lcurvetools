@@ -9,14 +9,14 @@ from lcurvetools import (
 )
 
 
-def test_lcurves_by_history_basic(simple_history):
+def test_lcurves_basic(simple_history):
     """Test basic learning curve plotting with a single history."""
     axes = lcurves(simple_history)
     assert len(axes) == 3  # Loss, metrics and lr axes
     plt.close()
 
 
-def test_lcurves_by_history_metrics(simple_history):
+def test_lcurves_metrics(simple_history):
     """Test learning curve plotting with specific metrics."""
     metrics = ["accuracy"]
     axes = lcurves(simple_history, plot_metrics=metrics)
@@ -24,7 +24,7 @@ def test_lcurves_by_history_metrics(simple_history):
     plt.close()
 
 
-def test_lcurves_by_history_no_validation(simple_history):
+def test_lcurves_no_validation(simple_history):
     """Test plotting without validation metrics and learning rate."""
     history = {
         "loss": simple_history["loss"],
@@ -35,7 +35,7 @@ def test_lcurves_by_history_no_validation(simple_history):
     plt.close()
 
 
-def test_lcurves_by_history_with_lr(simple_history):
+def test_lcurves_with_lr(simple_history):
     """Test learning curve plotting with learning rate."""
     axes = lcurves(simple_history, plot_learning_rate=True)
     assert len(axes) == 3  # Loss, metrics, and lr axes

@@ -1,6 +1,7 @@
 from typing import Literal
 from collections.abc import Mapping, Sequence
 import warnings
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 
@@ -308,7 +309,7 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
         full_history = {"epoch": list(range(1, prev_epochs + 1))}
     else:
         full_history = {}
-    full_history.update(prev_history)
+    full_history.update(deepcopy(prev_history))
 
     for key in full_history:
         if key in last_history:
