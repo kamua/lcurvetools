@@ -15,7 +15,7 @@ from .utils import (
 
 def lcurves(
     histories: dict | list[dict],
-    initial_epoch: int = 0,
+    initial_epoch: int = 1,
     epoch_range_to_scale: int | list[int] | tuple[int, int] = 0,
     plot_losses: bool | list[str] = True,
     plot_metrics: bool | list[str] = True,
@@ -26,11 +26,12 @@ def lcurves(
     figsize: tuple[float, float] | None = None,
 ):
     """
-    Plots learning curves of a neural network model trained with the keras
-    framework. Dependences of values of the losses, metrics and the learning
-    rate on the epoch index can be plotted on three subplots along a figure
-    column. The best values are marked for dependencies of losses and metrics
-    (minimum values for losses and best values for metrics).
+    Plots learning curves of neural network models trained with the Keras or
+    Ultralytics YOLO frameworks. Dependences of values of the losses, metrics
+    and the learning rate on the epoch index can be plotted on three subplots
+    along a figure column. The best values are marked for dependencies of
+    losses and metrics column. The best values are marked for dependencies of
+    losses and metrics (minimum values for losses and best values for metrics).
 
     Parameters
     ----------
@@ -40,37 +41,38 @@ def lcurves(
         epochs in the format of the `history` attribute of the `History`
         object which is returned by the
         [fit](https://keras.io/api/models/model_training_apis/#fit-method)
-        method of the model. The values of all keys should be represented by
-        numeric lists of the same length, equaled to the number of epochs
-        `n_epochs`.
-        - If list of dict, each dict in the list should be in the same format
+        method of Keras models. The values of all keys must be represented
+        by numeric lists of the same length, equaled to the number of epochs.
+        Additionally, the dictionary can have an `epoch` key with a list of
+        indices of the passed epochs, similar to the `epoch` field in the file
+        results.csv with training results of YOLO models. The `time` key of
+        dict is ignored.
+        - If list of dict, each dict in the list must be in the same format
         as described above for a single dict. The list of dicts is treated as
         a collection of fitting histories, and the plots will display all
         training and validation curves for each history.
 
-    initial_epoch : int, default=0
-        The epoch index at which the `fit` method had started to train
-        the model. The parameter corresponds to the same parameter of the
-        [fit](https://keras.io/api/models/model_training_apis/#fit-method)
-        method of a keras model. Also, setting `initial_epoch=1` can be useful
-        to convert the epoch index plotted along the horizontal axes of the
-        subplots into the number of passed epochs.
+    initial_epoch : non-negative int, default=1
+        Specifies the epoch index at which the `fit` method had started to
+        train the model. This parameter is ignored if the 'epoch' key is given
+        in the `histories` dictionaries.
 
     epoch_range_to_scale : int or list (tuple) of int or None, default=0
         Specifies the epoch index range within which the subplots of the
         losses and metrics are scaled.
-        - If `epoch_range_to_scale` is a list or a tuple of two int values,
-        then they specify the epoch index limits of the scaling range in the
-        form `[start, stop)`, i.e. as for `slice` and `range` objects. If
-        `start` is `None`, the scaling range starts from the first epoch. If
-        `stop` is `None`, the scaling range ends at the last epoch.
-        - If `epoch_range_to_scale` is an int value, then it specifies the
-        lower epoch index `start` of the scaling range, and the losses and
-        metrics subplots are scaled by epochs with indices from `start` to the
-        last. This case is equivalent to `epoch_range_to_scale = [start, None]`.
+        - If list or a tuple of two int values, then the values specify the
+        epoch index limits of the scaling range in the form `[start, stop)`,
+        i.e. as for `slice` and `range` objects. If `start` is `None`, the
+        scaling range starts from the first epoch. If `stop` is `None`, the
+        scaling range ends at the last epoch.
+        - If int, then it specifies the lower epoch index `start` of the
+        scaling range, and the losses and metrics subplots are scaled by epochs
+        with indices from `start` to the last. This case is equivalent to
+        `epoch_range_to_scale = [start, None]`.
 
         The epoch index values `start`, `stop` must take into account
-        the value of the `initial_epoch` parameter.
+        the values of the 'epoch' key in the `histories` dictionaries and of
+        the `initial_epoch` parameter.
 
     plot_losses : bool or list of str, default=True
         - If bool, it specifies the need to plot a subplot of losses.
@@ -147,11 +149,14 @@ def lcurves(
 
     Examples
     --------
-    >>> import keras
     >>> from lcurvetools import lcurves
 
+    1. Using Keras
+
+    >>> import keras
+
     [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
-    and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
+    and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the Keras model:
 
     >>> model = keras.Model(...) # or keras.Sequential(...)
     >>> model.compile(...)
@@ -174,6 +179,22 @@ def lcurves(
     >>>     hist = model.fit(...)
     >>>     histories.append(hist.history)
     >>> lcurves(histories);
+
+    2. Using Ultralytics YOLO
+
+    >>> from ultralytics import YOLO
+
+    [Load and train](https://docs.ultralytics.com/modes/train/#usage-examples) a model:
+
+    >>> model = YOLO("yolo11n.pt")
+    >>> model.train(data="coco8.yaml", epochs=10, ...)
+
+    Read the training results saved in the `results.csv` file after
+    training a YOLO model into a dictionary object and plot the learning curves:
+
+    >>> import pandas as pd
+    >>> history = pd.read_csv("path/to/results.csv").to_dict('list')
+    >>> lcurves(history);
     """
 
     def get_ylims(keys):
@@ -234,8 +255,32 @@ def lcurves(
                 )
     if isinstance(histories, dict):
         histories = [histories]
-    n_epochs = [_get_n_epochs(hist) for hist in histories]
-    n_epochs_max = max(n_epochs)
+    for hist in histories:
+        if "time" in hist.keys():
+            hist.pop("time")
+            warnings.warn(
+                "The 'time' key found in the histories will be ignored"
+            )
+    # n_epochs = [_get_n_epochs(hist) for hist in histories]
+    # n_epochs_max = max(n_epochs)
+
+    if not isinstance(initial_epoch, int) or initial_epoch < 0:
+        raise ValueError(
+            "The `initial_epoch` parameter should be a non-negative integer or"
+            " None."
+        )
+    for hist in histories:
+        if "epoch" not in hist.keys():
+            hist["epoch"] = range(
+                initial_epoch, initial_epoch + _get_n_epochs(hist)
+            )
+
+    n_epochs_max = max(_get_n_epochs(hist) for hist in histories)
+    last_epoch = max(hist["epoch"][-1] for hist in histories)
+
+    initial_epoch = last_epoch
+    for hist in histories:
+        initial_epoch = min(initial_epoch, hist["epoch"][0])
 
     if epoch_range_to_scale is None:
         epochs_slice = slice(0, n_epochs_max)
@@ -297,10 +342,6 @@ def lcurves(
                     "The values of the `optimization_modes` dict should be"
                     " 'min' or 'max'."
                 )
-    if not isinstance(initial_epoch, int) or initial_epoch < 0:
-        raise ValueError(
-            "The `initial_epoch` parameter should be a non-negative integer."
-        )
     if model_names is not None:
         if not isinstance(model_names, list):
             raise TypeError(
@@ -343,7 +384,9 @@ def lcurves(
             if "lr" == name or name.startswith("lr/") or "learning_rate" in name
         ]
         metric_keys += [
-            name for name in hist.keys() if name not in (loss_keys + lr_keys)
+            name
+            for name in hist.keys()
+            if name not in (loss_keys + lr_keys + ["epoch"])
         ]
     loss_keys = list(set(loss_keys))
     lr_keys = list(set(lr_keys))
@@ -483,8 +526,6 @@ def lcurves(
     axs[-1].tick_params(axis="x", labelbottom=True)
     axs[-1].set_xlabel("epoch")
 
-    x = range(initial_epoch, initial_epoch + n_epochs_max)
-
     index_subplot = 0
     kwargs_legend = dict(loc="upper left", bbox_to_anchor=(1.002, 1.05))
     markersize = 5
@@ -510,7 +551,8 @@ def lcurves(
                         if _label is not None:
                             n_labels += 1
                         lines = ax.plot(
-                            x[: len(hist[_key])],
+                            # x[: len(hist[_key])],
+                            hist["epoch"],
                             hist[_key],
                             label=_label,
                             color=color,
@@ -520,7 +562,7 @@ def lcurves(
                             hist[_key], _key, mode="min", verbose=False
                         )
                         ax.plot(
-                            x[best_epoch],
+                            hist["epoch"][best_epoch],
                             best_value,
                             marker="o",
                             markersize=markersize,
@@ -554,7 +596,8 @@ def lcurves(
                         if _label is not None:
                             n_labels += 1
                         lines = ax.plot(
-                            x[: len(hist[_key])],
+                            # x[: len(hist[_key])],
+                            hist["epoch"],
                             hist[_key],
                             label=_label,
                             color=color,
@@ -569,7 +612,7 @@ def lcurves(
                             hist[_key], _key, mode=mode, verbose=False
                         )
                         ax.plot(
-                            x[best_epoch],
+                            hist["epoch"][best_epoch],
                             best_value,
                             marker="o",
                             markersize=markersize,
@@ -587,6 +630,8 @@ def lcurves(
     if len(plot_lr_keys) > 0:
         ax = axs[index_subplot]
         n_labels = 0
+        max_lr = -float("inf")
+        min_lr = float("inf")
         for i, hist in enumerate(histories):
             for lr_name in lr_names:
                 color = (
@@ -600,17 +645,41 @@ def lcurves(
                 if _label is not None:
                     n_labels += 1
                 lines = ax.plot(
-                    x[: len(hist[lr_name])],
+                    # x[: len(hist[lr_name])],
+                    hist["epoch"],
                     hist[lr_name],
                     label=_label,
                     color=color,
                 )
-        ax.set_yscale("log", base=10)
-        ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
-        ax.yaxis.set_minor_locator(
-            ticker.LogLocator(numticks=4, subs=(0.2, 0.4, 0.6, 0.8))
-        )
-        ax.set_ylabel("learning rate")
+                max_lr = max(max_lr, max(hist[lr_name]))
+                min_lr = min(min_lr, min(hist[lr_name]))
+        if min_lr > 0 and max_lr / min_lr > 10:
+            ax.set_yscale("log", base=10)
+            ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
+            ax.yaxis.set_minor_locator(
+                ticker.LogLocator(numticks=4, subs=(0.2, 0.4, 0.6, 0.8))
+            )
+            ax.set_ylabel("learning rate")
+        else:
+            ax.ticklabel_format(axis="y", style="sci", scilimits=(-2, 2))
+            ax.yaxis.set_major_formatter(
+                ticker.ScalarFormatter(useMathText=True)
+            )
+
+            # offset_text = ax.yaxis.get_offset_text()
+            # offset_text.set_position((-0.1, 0.1))
+            # print(offset_text)
+
+            # ax.figure.canvas.draw()  # need to draw to get the offset text
+            ax.figure.draw_without_rendering()  # need to draw to get the offset text
+            offset = ax.yaxis.get_major_formatter().get_offset()
+            if offset:
+                # print(offset)
+                ax.yaxis.offsetText.set_visible(False)
+                ax.set_ylabel("lr, " + offset)
+            else:
+                ax.set_ylabel("learning rate")
+
         fontsize = min(10, max(5, 14 - n_labels))
         ncol = min(4, 1 + n_labels // 11)
         ax.legend(fontsize=fontsize, ncol=ncol, **kwargs_legend)
@@ -632,7 +701,7 @@ lcurves_by_history = lcurves
 
 def lcurves_by_MLP_estimator(
     MLP_estimator: object,
-    initial_epoch: int = 0,
+    initial_epoch: int = 1,
     epoch_range_to_scale: int | list[int] | tuple[int, int] = 0,
     plot_losses: bool = True,
     plot_val_scores: bool = True,
@@ -655,12 +724,9 @@ def lcurves_by_MLP_estimator(
     MLP_estimator : scikit-learn estimator of `MLPClassifier` or `MLPRegressor` classes
         The estimator must be trained already using the `fit` method.
 
-    initial_epoch : int, default=0
+    initial_epoch : non-negative int, default=1
         The epoch index at which the `fit` method had started to train the
-        model at the last run with the parameter `warm_start=True`. Also,
-        setting `initial_epoch=1` can be useful to convert the epoch index
-        plotted along the horizontal axes of the subplots into the number
-        of passed epochs.
+        model at the last run with the parameter `warm_start=True`.
 
     epoch_range_to_scale : int or list (tuple) of int, default=0
         Specifies the epoch index range within which the vertical axes with

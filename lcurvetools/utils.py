@@ -1,7 +1,6 @@
 from typing import Literal
 from collections.abc import Mapping, Sequence
 import warnings
-from copy import deepcopy
 
 import matplotlib.pyplot as plt
 
@@ -222,7 +221,9 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
     """
     Concatenate two dictionaries in the format of the `history` attribute of
     the `History` object which is returned by the [fit](https://keras.io/api/models/model_training_apis/#fit-method)
-    method of the model.
+    method of the model. Additionally, the dictionaries can have an `epoch` key
+    with a list of indices of the passed epochs, similar to the `epoch` field
+    in the file results.csv with training results of YOLO models.
 
     Useful for combining histories of model fitting with two or more consecutive
     runs into a single history to plot full learning curves.
@@ -239,12 +240,17 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
     Returns
     -------
     dict
-        Dictionary with combined histories.
+        Dictionary with concatenated histories. If the `epoch` key is contained
+        in at least one of the input dictionaries, the output dictionary will
+        contain this key with the correct list of consecutive epoch indices.
 
     Examples
     --------
+    >>> from lcurvetools import history_concatenate, lcurves
+
+    1. Using Keras
+
     >>> import keras
-    >>> from lcurvetools import history_concatenate, lcurves_by_history
 
     [Create](https://keras.io/api/models/), [compile](https://keras.io/api/models/model_training_apis/#compile-method)
     and [fit](https://keras.io/api/models/model_training_apis/#fit-method) the keras model:
@@ -260,7 +266,17 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
     >>> full_history = history_concatenate(hist1.history, hist2.history)
 
     Use `full_history` dictionary to plot full learning curves:
-    >>> lcurves_by_history(full_history);
+    >>> lcurves(full_history);
+
+    2. Using Ultralytics YOLO
+
+    >>> from ultralytics import YOLO
+
+    [Load and train](https://docs.ultralytics.com/modes/train/#usage-examples) a model:
+
+    >>> model = YOLO("yolo11n.pt")
+    >>> model.train(data="coco8.yaml", epochs=10, ...)
+
     """
     if not type(prev_history) is dict:
         raise TypeError("The `prev_history` parameter should be a dictionary.")
@@ -288,13 +304,35 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
         )
     last_epochs = list(last_epochs)[0]
 
-    full_history = deepcopy(prev_history)
+    if "epoch" not in prev_history and "epoch" in last_history:
+        full_history = {"epoch": list(range(1, prev_epochs + 1))}
+    else:
+        full_history = {}
+    full_history.update(prev_history)
 
-    for key in prev_history:
+    for key in full_history:
         if key in last_history:
-            full_history[key] += last_history[key]
+            if key == "epoch":
+                full_history[key] += [
+                    (
+                        full_history[key][-1] + epoch - last_history[key][0] + 1
+                        if epoch is not None
+                        else None
+                    )
+                    for epoch in last_history[key]
+                ]
+            else:
+                full_history[key] += last_history[key]
         else:
-            full_history[key] += [None] * last_epochs
+            if key == "epoch":
+                full_history[key] += list(
+                    range(
+                        full_history[key][-1] + 1,
+                        full_history[key][-1] + 1 + last_epochs,
+                    )
+                )
+            else:
+                full_history[key] += [None] * last_epochs
 
     for key in last_history:
         if key not in full_history:
