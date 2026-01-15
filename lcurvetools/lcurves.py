@@ -190,10 +190,14 @@ def lcurves(
     >>> model.train(data="coco8.yaml", epochs=10, ...)
 
     Read the training results saved in the `results.csv` file after
-    training a YOLO model into a dictionary object and plot the learning curves:
+    training a YOLO model into a dictionary object. The typical file path is
+    `runs/detect/train/results.csv` or similar.
 
     >>> import pandas as pd
-    >>> history = pd.read_csv("path/to/results.csv").to_dict('list')
+    >>> history = pd.read_csv("runs/detect/train/results.csv").to_dict('list')
+
+    Plot the learning curves:
+
     >>> lcurves(history);
     """
 

@@ -276,8 +276,29 @@ def history_concatenate(prev_history: dict, last_history: dict) -> dict:
     [Load and train](https://docs.ultralytics.com/modes/train/#usage-examples) a model:
 
     >>> model = YOLO("yolo11n.pt")
+    >>> model.train(data="coco8.yaml", epochs=20, ...)
+
+    Read the training results saved in the `results.csv` file after
+    training a YOLO model into the first dictionary object `history_1`.
+    The typical file path is `runs/detect/train/results.csv` or similar.
+
+    >>> import pandas as pd
+    >>> history_1 = pd.read_csv("runs/detect/train/results.csv").to_dict('list')
+
+    Additionally train of the model obtained at the previous stage with
+    possibly different training parameters:
+
+    >>> model = YOLO("runs/detect/train/weights/last.pt")
     >>> model.train(data="coco8.yaml", epochs=10, ...)
 
+    Read the training results into the second dictionary object `history_2`.
+
+    >>> history_2 = pd.read_csv("runs/detect/train2/results.csv").to_dict('list')
+
+    Concatenate the two history dictionaries into one and plot full learning curves:
+
+    >>> full_history = history_concatenate(history_1, history_2)
+    >>> lcurves(full_history);
     """
     if not type(prev_history) is dict:
         raise TypeError("The `prev_history` parameter should be a dictionary.")

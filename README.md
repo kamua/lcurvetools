@@ -1,6 +1,6 @@
 # LCurveTools
 
-Simple Python tools for plotting learning curves of neural network models trained with the keras or scikit-learn framework in a single figure in an easy-to-understand format.
+Simple Python tools for plotting learning curves of neural network models trained with the Keras, Ultralytics YOLO or scikit-learn framework in a single figure in an easy-to-understand format.
 
 Currently the `lcurvetools` package provides three basic functions: `lcurves`, `history_concatenate` and `lcurves_by_MLP_estimator`.
 
