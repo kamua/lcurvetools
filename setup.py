@@ -57,8 +57,9 @@ setup(
     name="lcurvetools",
     version=VERSION,
     description=(
-        "Simple tools for Python language to plot learning curves of a neural"
-        " network model trained with the keras or scikit-learn framework."
+        "Simple Python tools for plotting learning curves of neural network"
+        " models trained with the Keras, Ultralytics YOLO or scikit-learn"
+        " framework in a single figure in an easy-to-understand format."
     ),
     author="Andriy Konovalov",
     author_email="kandriy74@gmail.com",
@@ -85,7 +86,9 @@ setup(
     packages=find_packages(exclude=("tests*", "test_*", "demo_notebooks*")),
     keywords=[
         "learning curve",
-        "keras history",
+        "keras",
+        "ultralytics yolo",
+        "scikit-learn",
         "loss_curve",
         "validation_score",
     ],
