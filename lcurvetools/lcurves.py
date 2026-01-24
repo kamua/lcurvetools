@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Literal
 import warnings
 
@@ -75,13 +76,13 @@ def lcurves(
         the `initial_epoch` parameter.
 
     plot_losses : bool or list of str, default=True
-        - If bool, it specifies the need to plot a subplot of losses.
-        Dictionary keys with the name "loss" and names containing the
-        substring "_loss" are treated as losses keys.
+        - If bool, it specifies the need to plot a subplot of losses. The
+        dictionary key is treated as a losses key if its name is "loss" or
+        starts with "loss_" or "loss/" or ends with "_loss" or "/loss".
         - If list, it specifies loss key names of the `histories` dictionaries
         that should be plotted into the losses subplot. The subplot will also
         automatically display epoch dependencies of values with the prefix
-        'val_' of the specified key names.
+        "val_" or "val/" of the specified key names.
 
     plot_metrics : bool or list of str, default=True
         - If bool, it specifies the need to plot a subplot of metrics.
@@ -90,17 +91,18 @@ def lcurves(
         - If list, it specifies metric key names of the `histories` dictionaries
         that should be plotted into the metrics subplot. The subplot will also
         automatically display epoch dependencies of values with the prefix
-        'val_' of the specified key names.
+        "val_" or "val/" of the specified key names.
 
     plot_learning_rate : bool or list of str, default=True
         - If bool, it specifies the need to plot a subplot of learning rate.
-        Dictionary keys with the name "lr" and names containing the
-        substring "learning_rate" are treated as learning rate keys.
+        The dictionary key is treated as a learning rate key if its name is
+        "lr" or starts with "lr_" or "lr/" or ends with "_lr" or "/lr" or
+        contains the substring "learning_rate".
         - If list, it specifies learning rate key names of the `histories`
         dictionaries that should be plotted into the learning rate subplot.
 
         Learning rate values on the vertical axis are plotted in a logarithmic
-        scale.
+        scale if they change more than 10 times.
 
     color_grouping_by : str or None, default=None
         Specifies how colors of curves in the subplots are grouped.
@@ -259,6 +261,7 @@ def lcurves(
                 )
     if isinstance(histories, dict):
         histories = [histories]
+    histories = deepcopy(histories)
     for hist in histories:
         if "time" in hist.keys():
             hist.pop("time")
@@ -380,12 +383,23 @@ def lcurves(
     metric_keys = []
     for hist in histories:
         loss_keys += [
-            name for name in hist.keys() if name == "loss" or "_loss" in name
+            name
+            for name in hist.keys()
+            if name == "loss"
+            or name.startswith("loss_")
+            or name.startswith("loss/")
+            or name.endswith("_loss")
+            or name.endswith("/loss")
         ]
         lr_keys += [
             name
             for name in hist.keys()
-            if "lr" == name or name.startswith("lr/") or "learning_rate" in name
+            if "lr" == name
+            or name.startswith("lr/")
+            or name.startswith("lr_")
+            or name.endswith("/lr")
+            or name.endswith("_lr")
+            or "learning_rate" in name
         ]
         metric_keys += [
             name
@@ -689,8 +703,14 @@ def lcurves(
         ax.legend(fontsize=fontsize, ncol=ncol, **kwargs_legend)
         index_subplot += 1
 
-    axs[0].set_xlim(
-        left=initial_epoch - 1, right=initial_epoch + n_epochs_max + 1
+    axs[0].set_xlim(left=initial_epoch - 1, right=initial_epoch + n_epochs_max)
+    axs[0].xaxis.set_major_locator(
+        ticker.MaxNLocator(
+            nbins="auto", steps=[1, 2, 5, 10], integer=True, prune="both"
+        )
+    )
+    axs[0].xaxis.set_minor_locator(
+        ticker.MaxNLocator(steps=[1, 2, 5, 10], integer=True, min_n_ticks=1)
     )
 
     if n_subplots > 1:
