@@ -3,6 +3,7 @@
 .vscode/
 test_notebooks/
 demo_notebooks/
+ToDo.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
