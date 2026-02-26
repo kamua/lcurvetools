@@ -706,12 +706,19 @@ def lcurves(
     axs[0].set_xlim(left=initial_epoch - 1, right=initial_epoch + n_epochs_max)
     axs[0].xaxis.set_major_locator(
         ticker.MaxNLocator(
-            nbins="auto", steps=[1, 2, 5, 10], integer=True, prune="both"
+            nbins=20, steps=[1, 2, 5, 10], integer=True  # "auto",
         )
     )
-    axs[0].xaxis.set_minor_locator(
-        ticker.MaxNLocator(steps=[1, 2, 5, 10], integer=True, min_n_ticks=1)
-    )
+
+    base = 1 + n_epochs_max // 100
+    if 2 < base and base <= 5:
+        base = 5
+    elif 5 < base and base <= 10:
+        base = 10
+    if base <= 10:
+        axs[0].xaxis.set_minor_locator(
+            ticker.IndexLocator(base=base, offset=-1)
+        )
 
     if n_subplots > 1:
         plt.subplots_adjust(hspace=0)
