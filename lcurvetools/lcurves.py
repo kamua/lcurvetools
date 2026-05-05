@@ -24,6 +24,7 @@ def lcurves(
     color_grouping_by: str | None = None,
     model_names: list[str] | None = None,
     optimization_modes: dict[str, Literal["auto", "min", "max"]] | None = None,
+    optimum_values_in_legend: bool = True,
     figsize: tuple[float, float] | None = None,
 ):
     """
@@ -138,6 +139,10 @@ def lcurves(
         `lcurvetools.utils.get_mode_by_metric_name`.
         - If `None`, the "auto" mode will be used for all metrics.
         It only affects the marking of the best values on the subplot of metrics.
+
+    optimum_values_in_legend : bool, default=True
+        Specifies whether to display the optimum values of epochs and metrics
+        in the legends of the the losses and metrics subplots.
 
     figsize : a tuple (width, height) in inches or `None`, default=None.
         Specifies size of creating figure. If `None`, default values of width
@@ -563,10 +568,17 @@ def lcurves(
                     else:
                         _key = prefix + lr_name
                     if _key in hist.keys():
+                        best_epoch, best_value = get_best_epoch_value(
+                            hist[_key], _key, mode="min", verbose=False
+                        )
                         _label = _key
                         if model_names[i] != "":
                             _label += "_" + model_names[i]
                         if _label is not None:
+                            if optimum_values_in_legend:
+                                _label += (
+                                    f" ({best_epoch + 1}, {best_value:.3g})"
+                                )
                             n_labels += 1
                         lines = ax.plot(
                             # x[: len(hist[_key])],
@@ -575,9 +587,6 @@ def lcurves(
                             label=_label,
                             color=color,
                             linestyle=linestyles[prefix],
-                        )
-                        best_epoch, best_value = get_best_epoch_value(
-                            hist[_key], _key, mode="min", verbose=False
                         )
                         ax.plot(
                             hist["epoch"][best_epoch],
@@ -608,10 +617,22 @@ def lcurves(
                 for prefix in prefixes:
                     _key = prefix + lr_name
                     if _key in hist.keys():
+                        mode = (
+                            optimization_modes[lr_name]
+                            if optimization_modes
+                            else "auto"
+                        )
+                        best_epoch, best_value = get_best_epoch_value(
+                            hist[_key], _key, mode=mode, verbose=False
+                        )
                         _label = _key
                         if model_names[i] != "":
                             _label += "_" + model_names[i]
                         if _label is not None:
+                            if optimum_values_in_legend:
+                                _label += (
+                                    f" ({best_epoch + 1}, {best_value:.3g})"
+                                )
                             n_labels += 1
                         lines = ax.plot(
                             # x[: len(hist[_key])],
@@ -620,14 +641,6 @@ def lcurves(
                             label=_label,
                             color=color,
                             linestyle=linestyles[prefix],
-                        )
-                        mode = (
-                            optimization_modes[lr_name]
-                            if optimization_modes
-                            else "auto"
-                        )
-                        best_epoch, best_value = get_best_epoch_value(
-                            hist[_key], _key, mode=mode, verbose=False
                         )
                         ax.plot(
                             hist["epoch"][best_epoch],

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-05-05
+
+### Added
+
+- A new boolean parameter `optimum_values_in_legend` has been added to the `lcurves()` function. The parameter specifies whether to display the optimum values of epochs and metrics in the legends of the the losses and metrics subplots.
+
 ## [1.1.1] - 2026-02-26
 
 ### Changed
